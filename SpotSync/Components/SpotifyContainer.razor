@@ -1,0 +1,140 @@
+﻿@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using SpotSync.Data
+@using SpotifyAPI.Web
+
+@inject NavigationManager navManager
+@inject AccountService accountService
+@inject SpotifyService spotifyService
+@inject SyncService syncService
+
+
+<CascadingValue Value="this">
+    @if (_isAuthed && Me != null)
+    {
+        <span>AccessToken</span>
+        @ChildContent
+    }
+    else
+    {
+        <span>To get started:</span>
+        <a href="@AuthUri">
+            Login via Spotify
+        </a>
+    }
+   
+
+</CascadingValue>
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [SupplyParameterFromQuery(Name = "code")]
+    public string? Code { get; set; }
+
+    public SpotifyClient Client;
+
+    public Uri? AuthUri;
+
+    public string clientId => Environment.GetEnvironmentVariable("SPOTIFY_CLIENT_ID") ?? string.Empty;
+
+    public string clientSecret => Environment.GetEnvironmentVariable("SPOTIFY_CLIENT_SECRET") ?? string.Empty;
+
+    public Uri CallbackUri => navManager.ToAbsoluteUri(navManager.BaseUri);
+
+    private bool _isAuthed { get; set; }
+
+    public AuthorizationCodeTokenResponse? Response { get; set; }
+
+    public PrivateUser Me;
+
+    public SpotifyAccount Account;
+
+    public List<FullPlaylist> Playlists { get; set; }
+
+    public List<SavedTrack> SavedTracks { get; set; }
+
+    protected override void OnInitialized()
+    {
+
+        var loginRequest = new LoginRequest(CallbackUri, clientId, LoginRequest.ResponseType.Code)
+            {
+                Scope = new[] { 
+                    Scopes.PlaylistReadPrivate, 
+                    Scopes.PlaylistReadCollaborative, 
+                    Scopes.UserLibraryRead, 
+                    Scopes.UserLibraryModify, 
+                    Scopes.UserReadPrivate, 
+                    Scopes.UserReadPrivate,
+                    Scopes.PlaylistModifyPrivate,
+                    Scopes.PlaylistModifyPublic }
+            };
+        AuthUri = loginRequest.ToUri();
+
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(Code) && _isAuthed == false)
+        {
+
+            try
+            {
+                Response = await new OAuthClient().RequestToken(
+                    new AuthorizationCodeTokenRequest(clientId, clientSecret, Code, CallbackUri)
+                );
+            } catch (Exception e)
+            {
+                var _ = e;
+            }
+            //TODO Save Data in DB 
+            if(Response is null)
+            {
+                navManager.NavigateTo("/");
+            } else
+            {
+                _isAuthed = true;
+                Client = new SpotifyClient(Response.AccessToken);
+                Me = await Client.UserProfile.Current();
+                Account = await accountService.GetOrCreateAccount(Me, Response);
+
+                Playlists = await GetFullPlaylists();
+                SavedTracks = await GetLastLikedSongs();
+            }
+        }
+    }
+
+    private async Task<List<SpotifyAPI.Web.FullPlaylist>> GetFullPlaylists() 
+    {
+        if(_isAuthed && Me is not null)
+        {
+            var firstPage = await Client.Playlists.CurrentUsers();
+            return (await Client.PaginateAll(firstPage)).ToList();
+        }
+        return new();
+
+    }
+
+    private async Task<List<SpotifyAPI.Web.SavedTrack>> GetLastLikedSongs()
+    {
+        return await spotifyService.GetLast100Tracks(Client);
+    }
+
+
+    public async Task ChangePlaylist(string newPlaylist)
+    {
+        await accountService.UpdatePlaylist(Account.Guid, newPlaylist);
+    }
+
+    public async Task UpdateSyncHour()
+    {
+        await accountService.UpdateSyncHour(Account.Guid, Account.RefreshHour);
+    }
+
+    public async Task SyncPlaylist()
+    {
+        await syncService.SyncTopSongs(Account.Guid);
+    }
+    
+
+}

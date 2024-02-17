@@ -1,0 +1,27 @@
+﻿@rendermode InteractiveServer
+
+<HxCard CssClass="p-0">
+    <HeaderTemplate>
+        <HxCardTitle>All Playlists</HxCardTitle>
+        <div class="card-actions">
+            <HxButton Icon="BootstrapIcon.Plus" IconPlacement="ButtonIconPlacement.Start" Color="ThemeColor.Success" Enabled="false">Add Playlist</HxButton>
+        </div>
+    </HeaderTemplate>
+    <BodyTemplate>
+        
+        <HxCardText>
+            <HxListGroup>
+                @foreach (var playlist in Spotify?.Playlists?.Where(x => x.Owner?.Id == Spotify.Me.Id || (bool)(x.Collaborative ?? false)))
+                {
+                    <PlaylistItem Playlist="playlist"></PlaylistItem>
+                }
+            </HxListGroup>
+        </HxCardText>
+        
+    </BodyTemplate>
+</HxCard>
+
+@code {
+    [CascadingParameter]
+    public SpotifyContainer Spotify { get; set; }
+}

@@ -1,0 +1,23 @@
+﻿<HxListGroupItem Active=@IsActive>
+    <div class="d-flex">
+        <span class="mx-auto">@Playlist.Name - @Playlist.Owner?.DisplayName</span>
+        <HxButton Text="Choose Playlist" Color="ThemeColor.Primary" Size="ButtonSize.Small" CssClass=@(IsActive ? "opacity-0" : "") @onclick="HandleChoosePlaylist"></HxButton>
+    </div>
+
+
+</HxListGroupItem>
+
+@code {
+    [CascadingParameter]
+    public SpotifyContainer Spotify { get; set; }
+
+    [Parameter]
+    public SpotifyAPI.Web.FullPlaylist Playlist { get; set; }
+
+    private bool IsActive => !string.IsNullOrWhiteSpace(Spotify.Account.SelectedPlaylist) ? Spotify.Account.SelectedPlaylist.Equals(Playlist.Id, StringComparison.OrdinalIgnoreCase) : false;
+
+    public async Task HandleChoosePlaylist()
+    {
+        await Spotify.ChangePlaylist(Playlist.Id);
+    }
+}

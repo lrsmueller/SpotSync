@@ -1,0 +1,26 @@
+﻿<HxCard CssClass="p-0">
+    <HeaderTemplate>
+		<HxCardTitle>Last Liked Songs</HxCardTitle>
+		<div class="card-actions">
+			<HxButton Icon="BootstrapIcon.ArrowClockwise" IconPlacement="ButtonIconPlacement.Start" Color="ThemeColor.Success" @onclick=Spotify.SyncPlaylist>Refresh Playlist</HxButton>
+		</div>
+    </HeaderTemplate>
+    <BodyTemplate>
+			<HxRepeater Data="Spotify?.SavedTracks.Take(20)">
+				<ItemTemplate Context="item">
+					<p class="mb-1">@item.Track.Name</p>
+				</ItemTemplate>
+				<FooterTemplate>
+					<p>@Spotify?.SavedTracks.Count() Songs</p>
+				</FooterTemplate>
+				<NullTemplate>
+					Loading...
+				</NullTemplate>
+			</HxRepeater>
+    </BodyTemplate>
+</HxCard>
+
+@code {
+	[CascadingParameter]
+	public SpotifyContainer Spotify { get; set; }
+}

@@ -1,0 +1,20 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using SpotSync.Components.Shared
+@using SpotifyAPI.Web
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+
+
+
+
+    <div class="row row-cols-3">
+        <div class="col">
+            <LastLikedSongs></LastLikedSongs>
+        </div>
+        <div class="col">
+            <Playlists></Playlists>
+        </div>
+        <div class="col">
+            <Profile></Profile>
+        </div>
+    </div>

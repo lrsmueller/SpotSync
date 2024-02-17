@@ -1,0 +1,56 @@
+﻿<HxCard CssClass="p-0">
+    <HeaderTemplate>
+        <HxCardTitle>Sync and Informations</HxCardTitle>
+    </HeaderTemplate>
+    <BodyTemplate> 
+        <EditForm Model=@Spotify>
+            <div  class="mb-3 row">
+                <label class="col-5 col-form-label"></label>
+                <InputSelect class="col form-select" 
+                    @bind-Value="Spotify.Account.RefreshHour"
+                    @onchange=Spotify.UpdateSyncHour>
+                    <option value="0">0 Clock</option>
+                    <option value="1">1 Clock</option>
+                    <option value="2">2 Clock</option>
+                    <option value="3">3 Clock</option>
+                    <option value="4">4 Clock</option>
+                    <option value="5">5 Clock</option>
+                    <option value="6">6 Clock</option>
+                    <option value="7">7 Clock</option>
+                    <option value="8">8 Clock</option>
+                    <option value="9">9 Clock</option>
+                    <option value="10">10 Clock</option>
+                    <option value="11">11 Clock</option>
+                    <option value="12">12 Clock</option>
+                    <option value="13">13 Clock</option>
+                    <option value="14">14 Clock</option>
+                    <option value="15">15 Clock</option>
+                    <option value="16">16 Clock</option>
+                    <option value="17">17 Clock</option>
+                    <option value="18">18 Clock</option>
+                    <option value="19">19 Clock</option>
+                    <option value="20">20 Clock</option>
+                    <option value="21">21 Clock</option>
+                    <option value="22">22 Clock</option>
+                    <option value="23">23 Clock</option>
+                </InputSelect>
+            </div>
+        </EditForm>
+        <div class="">
+            <p>Name: @Spotify?.Me.DisplayName</p>
+            <p>ID: @Spotify?.Me.Id</p>
+            <p>Country: @Spotify?.Me.Country</p>
+            <p>Product: @Spotify?.Me.Product</p>
+        </div>
+
+        
+    </BodyTemplate>
+    <FooterTemplate>
+        <HxButton Icon="BootstrapIcon.BoxArrowLeft" Color="ThemeColor.Secondary" CssClass="me-3">Logout</HxButton>
+        <HxButton Icon="BootstrapIcon.Trash2Fill" Color="ThemeColor.Danger">Delete Profile</HxButton>
+    </FooterTemplate>
+</HxCard>
+@code {
+    [CascadingParameter]
+    public SpotifyContainer Spotify { get; set; } 
+}
