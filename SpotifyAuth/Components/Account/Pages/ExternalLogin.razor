@@ -12,39 +12,14 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 @inject IUserStore<ApplicationUser> UserStore
-@inject IEmailSender<ApplicationUser> EmailSender
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<ExternalLogin> Logger
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
-<PageTitle>Register</PageTitle>
+<PageTitle>Registering Account</PageTitle>
 
 <StatusMessage Message="@message" />
-<h1>Register</h1>
-<h2>Associate your @ProviderDisplayName account.</h2>
-<hr />
-
-<div  class="alert alert-info">
-    You've successfully authenticated with <strong>@ProviderDisplayName</strong>.
-    Please enter an email address for this site below and click the Register button to finish
-    logging in.
-</div>
-
-<div class="row">
-    <div class="col-md-4">
-        <EditForm Model="Input" OnValidSubmit="OnValidSubmitAsync" FormName="confirmation" method="post">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" class="form-control" autocomplete="email" placeholder="Please enter your email." />
-                <label for="email" class="form-label">Email</label>
-                <ValidationMessage For="() => Input.Email" />
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-        </EditForm>
-    </div>
-</div>
 
 @code {
     public const string LoginCallbackAction = "LoginCallback";
@@ -54,9 +29,6 @@
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
-
-    [SupplyParameterFromForm]
-    private InputModel Input { get; set; } = new();
 
     [SupplyParameterFromQuery]
     private string? RemoteError { get; set; }
@@ -104,15 +76,14 @@
         var result = await SignInManager.ExternalLoginSignInAsync(
             externalLoginInfo.LoginProvider,
             externalLoginInfo.ProviderKey,
-            isPersistent: false,
+            isPersistent: true,
             bypassTwoFactor: true);
 
         if (result.Succeeded)
         {
-            // var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            //Update Tokens in DB
             await SignInManager.UpdateExternalAuthenticationTokensAsync(externalLoginInfo);
-            // HttpContext.Features
-            // SignInManager.UserManager.tok
+            
             Logger.LogInformation(
                 "{Name} logged in with {LoginProvider} provider.",
                 externalLoginInfo.Principal.Identity?.Name,
@@ -122,22 +93,21 @@
         else if (result.IsLockedOut)
         {
             RedirectManager.RedirectTo("Account/Lockout");
+        } else
+        {
+            await TryCreateUser();
         }
-
-        // // If the user does not have an account, then ask the user to create an account.
-        // if (externalLoginInfo.Principal.HasClaim(c => c.Type == ClaimTypes.Email))
-        // {
-        //     Input.Email = externalLoginInfo.Principal.FindFirstValue(ClaimTypes.Email) ?? "";
-        // }
     }
 
-    private async Task OnValidSubmitAsync()
+    private async Task TryCreateUser()
     {
         var emailStore = GetEmailStore();
         var user = CreateUser();
 
-        await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
-        await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+        //Username
+        var mail = externalLoginInfo.Principal.Claims.Where(x => x.Type == ClaimTypes.Email).FirstOrDefault();
+        await UserStore.SetUserNameAsync(user, externalLoginInfo.ProviderKey, CancellationToken.None);
+        await emailStore.SetEmailAsync(user, mail.Value, CancellationToken.None);
         
         var result = await UserManager.CreateAsync(user);
         if (result.Succeeded)
@@ -154,15 +124,9 @@
                 var callbackUrl = NavigationManager.GetUriWithQueryParameters(
                     NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
                     new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
-                await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
 
-                // If account confirmation is required, we need to show the link if we don't have a real email sender
-                if (UserManager.Options.SignIn.RequireConfirmedAccount)
-                {
-                    RedirectManager.RedirectTo("Account/RegisterConfirmation", new() { ["email"] = Input.Email });
-                }
-
-                await SignInManager.SignInAsync(user, isPersistent: false, externalLoginInfo.LoginProvider);
+                await SignInManager.SignInAsync(user, isPersistent: true, externalLoginInfo.LoginProvider);
+                await SignInManager.UpdateExternalAuthenticationTokensAsync(externalLoginInfo);
                 RedirectManager.RedirectTo(ReturnUrl);
             }
         }
