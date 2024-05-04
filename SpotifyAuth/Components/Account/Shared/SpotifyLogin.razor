@@ -1,0 +1,29 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+@using SpotifyAuth.Data
+
+<form action="Account/PerformExternalLogin" method="post" class="@CssClass" >
+
+    <AntiforgeryToken />
+    <input type="hidden" name="ReturnUrl" value="" />
+    <button type="submit" class="btn btn-spotify btn-pill text-uppercase" name="provider"
+            value="@SpotifyLoginProvider.Name" title="Login using Spotify">
+        Login using Spotify
+    </button>
+
+</form>
+
+@code {
+    [Parameter] public string CssClass { get; set; } = "empty-action";
+
+    [Inject] private SignInManager<ApplicationUser> SignInManager { get; set; }
+
+    private AuthenticationScheme SpotifyLoginProvider;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        SpotifyLoginProvider = (await SignInManager.GetExternalAuthenticationSchemesAsync()).FirstOrDefault() ?? throw new ArgumentNullException("Spotify Login could not be found");
+        
+    }
+}

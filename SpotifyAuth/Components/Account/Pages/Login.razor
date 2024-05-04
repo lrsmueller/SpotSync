@@ -12,21 +12,19 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Log in</PageTitle>
+<PageTitle>Spotify Playlist Sync</PageTitle>
+<div class="empty">
+    <p class="empty-title">Spotify Playlist Sync Service</p>
+    <p class="empty-subtitle text-secondary">
+        Please connect your Spotify account to use this Service
+    </p>
+    <SpotifyLogin />
 
-<h1>Log in</h1>
-<div class="row">
-     <form class="" action="Account/PerformExternalLogin" method="post">
-        <div>
-            <AntiforgeryToken />
-            <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
-            <button type="submit" class="btn btn-primary" name="provider" 
-                    value="@SpotifyLoginProvider.Name"  title="Login using Spotify">
-                Login using Spotify
-            </button>
-        </div>
-    </form>
 </div>
+
+
+
+
 
 @code {
     private string? errorMessage;

@@ -49,3 +49,26 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+.text-spotify {
+    color: #1db954
+}
+
+.bg-spotify {
+    background-color: #1db954;
+}
+
+.btn-spotify {
+    --tblr-btn-border-color: transparent;
+    --tblr-btn-hover-border-color: transparent;
+    --tblr-btn-active-border-color: transparent;
+    --tblr-btn-color: var(--tblr-success-fg);
+    --tblr-btn-bg: #1db954;
+    --tblr-btn-hover-color: var(--tblr-success-fg);
+    --tblr-btn-hover-bg: rgba(var(--tblr-success-rgb), .8);
+    --tblr-btn-active-color: var(--tblr-success-fg);
+    --tblr-btn-active-bg: rgba(var(--tblr-success-rgb), .8);
+    --tblr-btn-disabled-bg: #1db954;
+    --tblr-btn-disabled-color: var(--tblr-success-fg);
+    --tblr-btn-box-shadow: var(--tblr-shadow-button), var(--tblr-shadow-button-inset);
+}
