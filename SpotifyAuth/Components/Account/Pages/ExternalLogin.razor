@@ -85,7 +85,21 @@
         {
             //Update Tokens in DB
             await SignInManager.UpdateExternalAuthenticationTokensAsync(externalLoginInfo);
-            
+
+            //Update Claims 
+            //https://learn.microsoft.com/en-us/aspnet/core/security/authentication/social/additional-claims?view=aspnetcore-8.0#map-user-data-keys-and-create-claims
+            if (_claimsToSync.Count > 0)
+            {
+                var user = await UserManager.FindByLoginAsync(externalLoginInfo.LoginProvider,
+                    externalLoginInfo.ProviderKey);
+                var userClaims = await UserManager.GetClaimsAsync(user);
+                bool refreshSignIn = await ClaimsMapper(user);
+
+                if (refreshSignIn)
+                {
+                    await SignInManager.RefreshSignInAsync(user);
+                }
+            }
             Logger.LogInformation(
                 "{Name} logged in with {LoginProvider} provider.",
                 externalLoginInfo.Principal.Identity?.Name,
@@ -110,7 +124,7 @@
         var mail = externalLoginInfo.Principal.Claims.Where(x => x.Type == ClaimTypes.Email).FirstOrDefault();
         await UserStore.SetUserNameAsync(user, externalLoginInfo.ProviderKey, CancellationToken.None);
         await emailStore.SetEmailAsync(user, mail.Value, CancellationToken.None);
-        
+
         var result = await UserManager.CreateAsync(user);
         if (result.Succeeded)
         {
@@ -126,6 +140,9 @@
                 var callbackUrl = NavigationManager.GetUriWithQueryParameters(
                     NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
                     new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
+
+                //create Claims 
+                var r = await ClaimsMapper(user);
 
                 await SignInManager.SignInAsync(user, isPersistent: true, externalLoginInfo.LoginProvider);
                 await SignInManager.UpdateExternalAuthenticationTokensAsync(externalLoginInfo);
@@ -163,5 +180,48 @@
         [Required]
         [EmailAddress]
         public string Email { get; set; } = "";
+    }
+
+    private readonly IReadOnlyDictionary<string, string> _claimsToSync = new Dictionary<string, string>()
+        {
+            { SpotifyClaimTypes.ProfilePicture, string.Empty },
+            { SpotifyClaimTypes.Product, string.Empty},
+        };
+
+    private async Task<bool> ClaimsMapper(ApplicationUser user)
+    {
+        var refreshSignIn = false;
+        var userClaims = await UserManager.GetClaimsAsync(user);
+        foreach (var addedClaim in _claimsToSync)
+        {
+            var userClaim = userClaims
+                .FirstOrDefault(c => c.Type == addedClaim.Key);
+
+            if (externalLoginInfo.Principal.HasClaim(c => c.Type == addedClaim.Key))
+            {
+                var externalClaim = externalLoginInfo.Principal.FindFirst(addedClaim.Key);
+
+                if (userClaim == null)
+                {
+                    await UserManager.AddClaimAsync(user,
+                        new Claim(addedClaim.Key, externalClaim.Value));
+                    refreshSignIn = true;
+                }
+                else if (userClaim.Value != externalClaim.Value)
+                {
+                    await UserManager
+                        .ReplaceClaimAsync(user, userClaim, externalClaim);
+                    refreshSignIn = true;
+                }
+            }
+            else if (userClaim == null)
+            {
+                // Fill with a default value
+                await UserManager.AddClaimAsync(user, new Claim(addedClaim.Key,
+                    addedClaim.Value));
+                refreshSignIn = true;
+            }
+        }
+        return refreshSignIn;
     }
 }

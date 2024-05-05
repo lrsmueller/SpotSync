@@ -3,6 +3,8 @@
 @using Microsoft.AspNetCore.Identity
 @using SpotifyAuth.Data
 
+@attribute [AllowAnonymous]
+
 <form action="Account/PerformExternalLogin" method="post" class="@CssClass" >
 
     <AntiforgeryToken />
