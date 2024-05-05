@@ -8,3 +8,9 @@
 	- [ ] Last Liked Songs
 - [ ] Background Sync Service 
 - [ ] Save Spotify Data (User Icon/Premium)
+- [ ] 
+- [ ] 
+- Strucutre
+	- src/SpotSync RENAME
+	- build -> NUKE build
+	- 
