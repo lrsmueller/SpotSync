@@ -1,0 +1,51 @@
+﻿@page "/Account/Login"
+
+@attribute [AllowAnonymous]
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+@using SpotSync.Data
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject ILogger<Login> Logger
+@inject NavigationManager NavigationManager
+@inject IdentityRedirectManager RedirectManager
+
+<PageTitle>Spotify Playlist Sync</PageTitle>
+<div class="empty">
+    <p class="empty-title">Spotify Playlist Sync Service</p>
+    <p class="empty-subtitle text-secondary">
+        Please connect your Spotify account to use this Service
+    </p>
+    <SpotifyLogin />
+
+</div>
+
+
+
+
+
+@code {
+    private string? errorMessage;
+
+    private AuthenticationScheme? SpotifyLoginProvider;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (HttpMethods.IsGet(HttpContext.Request.Method))
+        {
+            // Clear the existing external cookie to ensure a clean login process
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+            SpotifyLoginProvider = (await SignInManager.GetExternalAuthenticationSchemesAsync()).FirstOrDefault() ?? throw new ArgumentNullException("Spotify Login could not be found");
+        }
+
+        
+    }
+}

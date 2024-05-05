@@ -1,0 +1,227 @@
+﻿@page "/Account/ExternalLogin"
+
+@attribute [AllowAnonymous]
+
+@using System.ComponentModel.DataAnnotations
+@using System.Security.Claims
+@using System.Text
+@using System.Text.Encodings.Web
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
+@using SpotSync.Data
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject IUserStore<ApplicationUser> UserStore
+@inject NavigationManager NavigationManager
+@inject IdentityRedirectManager RedirectManager
+@inject ILogger<ExternalLogin> Logger
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Registering Account</PageTitle>
+
+<StatusMessage Message="@message" />
+
+@code {
+    public const string LoginCallbackAction = "LoginCallback";
+
+    private string? message;
+    private ExternalLoginInfo externalLoginInfo = default!;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromQuery]
+    private string? RemoteError { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? Action { get; set; }
+
+    private string? ProviderDisplayName => externalLoginInfo.ProviderDisplayName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (RemoteError is not null)
+        {
+            RedirectManager.RedirectToWithStatus("Account/Login", $"Error from external provider: {RemoteError}", HttpContext);
+        }
+
+        var info = await SignInManager.GetExternalLoginInfoAsync();
+        if (info is null)
+        {
+            RedirectManager.RedirectToWithStatus("Account/Login", "Error loading external login information.", HttpContext);
+        }
+
+        externalLoginInfo = info;
+
+        if (HttpMethods.IsGet(HttpContext.Request.Method))
+        {
+            if (Action == LoginCallbackAction)
+            {
+                await OnLoginCallbackAsync();
+                return;
+            }
+
+            // We should only reach this page via the login callback, so redirect back to
+            // the login page if we get here some other way.
+            RedirectManager.RedirectTo("Account/Login");
+        }
+    }
+
+    private async Task OnLoginCallbackAsync()
+    {
+        // Sign in the user with this external login provider if the user already has a login.
+        var result = await SignInManager.ExternalLoginSignInAsync(
+            externalLoginInfo.LoginProvider,
+            externalLoginInfo.ProviderKey,
+            isPersistent: true,
+            bypassTwoFactor: true);
+
+        if (result.Succeeded)
+        {
+            //Update Tokens in DB
+            await SignInManager.UpdateExternalAuthenticationTokensAsync(externalLoginInfo);
+
+            //Update Claims 
+            //https://learn.microsoft.com/en-us/aspnet/core/security/authentication/social/additional-claims?view=aspnetcore-8.0#map-user-data-keys-and-create-claims
+            if (_claimsToSync.Count > 0)
+            {
+                var user = await UserManager.FindByLoginAsync(externalLoginInfo.LoginProvider,
+                    externalLoginInfo.ProviderKey);
+                var userClaims = await UserManager.GetClaimsAsync(user);
+                bool refreshSignIn = await ClaimsMapper(user);
+
+                if (refreshSignIn)
+                {
+                    await SignInManager.RefreshSignInAsync(user);
+                }
+            }
+            Logger.LogInformation(
+                "{Name} logged in with {LoginProvider} provider.",
+                externalLoginInfo.Principal.Identity?.Name,
+                externalLoginInfo.LoginProvider);
+            RedirectManager.RedirectTo(ReturnUrl);
+        }
+        else if (result.IsLockedOut)
+        {
+            RedirectManager.RedirectTo("Account/Lockout");
+        } else
+        {
+            await TryCreateUser();
+        }
+    }
+
+    private async Task TryCreateUser()
+    {
+        var emailStore = GetEmailStore();
+        var user = CreateUser();
+
+        //Username
+        var mail = externalLoginInfo.Principal.Claims.Where(x => x.Type == ClaimTypes.Email).FirstOrDefault();
+        await UserStore.SetUserNameAsync(user, externalLoginInfo.ProviderKey, CancellationToken.None);
+        await emailStore.SetEmailAsync(user, mail.Value, CancellationToken.None);
+
+        var result = await UserManager.CreateAsync(user);
+        if (result.Succeeded)
+        {
+            result = await UserManager.AddLoginAsync(user, externalLoginInfo);
+            if (result.Succeeded)
+            {
+                Logger.LogInformation("User created an account using {Name} provider.", externalLoginInfo.LoginProvider);
+
+                var userId = await UserManager.GetUserIdAsync(user);
+                var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+                code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+                var callbackUrl = NavigationManager.GetUriWithQueryParameters(
+                    NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
+                    new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
+
+                //create Claims 
+                var r = await ClaimsMapper(user);
+
+                await SignInManager.SignInAsync(user, isPersistent: true, externalLoginInfo.LoginProvider);
+                await SignInManager.UpdateExternalAuthenticationTokensAsync(externalLoginInfo);
+                RedirectManager.RedirectTo(ReturnUrl);
+            }
+        }
+
+        message = $"Error: {string.Join(",", result.Errors.Select(error => error.Description))}";
+    }
+
+    private ApplicationUser CreateUser()
+    {
+        try
+        {
+            return Activator.CreateInstance<ApplicationUser>();
+        }
+        catch
+        {
+            throw new InvalidOperationException($"Can't create an instance of '{nameof(ApplicationUser)}'. " +
+                $"Ensure that '{nameof(ApplicationUser)}' is not an abstract class and has a parameterless constructor");
+        }
+    }
+
+    private IUserEmailStore<ApplicationUser> GetEmailStore()
+    {
+        if (!UserManager.SupportsUserEmail)
+        {
+            throw new NotSupportedException("The default UI requires a user store with email support.");
+        }
+        return (IUserEmailStore<ApplicationUser>)UserStore;
+    }
+
+    private sealed class InputModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = "";
+    }
+
+    private readonly IReadOnlyDictionary<string, string> _claimsToSync = new Dictionary<string, string>()
+        {
+            { SpotifyClaimTypes.ProfilePicture, string.Empty },
+            { SpotifyClaimTypes.Product, string.Empty},
+        };
+
+    private async Task<bool> ClaimsMapper(ApplicationUser user)
+    {
+        var refreshSignIn = false;
+        var userClaims = await UserManager.GetClaimsAsync(user);
+        foreach (var addedClaim in _claimsToSync)
+        {
+            var userClaim = userClaims
+                .FirstOrDefault(c => c.Type == addedClaim.Key);
+
+            if (externalLoginInfo.Principal.HasClaim(c => c.Type == addedClaim.Key))
+            {
+                var externalClaim = externalLoginInfo.Principal.FindFirst(addedClaim.Key);
+
+                if (userClaim == null)
+                {
+                    await UserManager.AddClaimAsync(user,
+                        new Claim(addedClaim.Key, externalClaim.Value));
+                    refreshSignIn = true;
+                }
+                else if (userClaim.Value != externalClaim.Value)
+                {
+                    await UserManager
+                        .ReplaceClaimAsync(user, userClaim, externalClaim);
+                    refreshSignIn = true;
+                }
+            }
+            else if (userClaim == null)
+            {
+                // Fill with a default value
+                await UserManager.AddClaimAsync(user, new Claim(addedClaim.Key,
+                    addedClaim.Value));
+                refreshSignIn = true;
+            }
+        }
+        return refreshSignIn;
+    }
+}

@@ -1,0 +1,70 @@
+﻿@* @rendermode InteractiveServer *@
+@page "/Account/Manage/Delete"
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
+@using SpotSync.Data
+
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IdentityUserAccessor UserAccessor
+@inject IdentityRedirectManager RedirectManager
+@inject ILogger<Delete> Logger
+
+<PageTitle>Delete Personal Data</PageTitle>
+
+<StatusMessage Message="@message" />
+
+<h3>Delete Personal Data</h3>
+
+<div class="alert alert-warning" role="alert">
+    <p>
+        <strong>Deleting this data will permanently remove your account, and this cannot be recovered.</strong>
+    </p>
+</div>
+
+<div>
+    <form @onsubmit="OnValidSubmitAsync" method="post" @formname="delete">
+        <AntiforgeryToken />
+        <button class="w-100 btn btn-lg btn-danger" type="submit">Delete data and close my account</button>
+    </form>
+</div>
+
+@code {
+    private string? message;
+    private ApplicationUser user = default!;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if(HttpContext != null)
+        {   
+            user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        }
+
+    }
+
+    private void HandleClick()
+    {
+        Task.Delay(10);
+
+    }
+
+    private async Task OnValidSubmitAsync()
+    {
+        var result = await UserManager.DeleteAsync(user);
+        if (!result.Succeeded)
+        {
+            throw new InvalidOperationException("Unexpected error occurred deleting user.");
+        }
+
+        await SignInManager.SignOutAsync();
+
+        var userId = await UserManager.GetUserIdAsync(user);
+        Logger.LogInformation("User with ID '{UserId}' deleted themselves.", userId);
+
+        RedirectManager.RedirectToCurrentPage();
+    }
+}
