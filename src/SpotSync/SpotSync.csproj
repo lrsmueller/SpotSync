@@ -8,7 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="D:\Nuget\Packages\bytexdigital.blazor.components.cookieconsent\1.0.18\contentFiles\any\net5.0\README.md" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AspNet.Security.OAuth.Spotify" Version="8.0.0" />
+    <PackageReference Include="BytexDigital.Blazor.Components.CookieConsent" Version="1.0.18" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />

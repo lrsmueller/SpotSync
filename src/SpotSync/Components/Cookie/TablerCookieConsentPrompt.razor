@@ -1,0 +1,51 @@
+﻿@using BytexDigital.Blazor.Components.CookieConsent
+@using BytexDigital.Blazor.Components.CookieConsent.Dialogs.Prompts
+@using Microsoft.Extensions.Options
+@inherits CookieConsentPromptComponentBase
+
+<div class="offcanvas offcanvas-bottom h-auto show" tabindex="-1" id="offcanvasBottom" aria-modal="true" role="dialog">
+    <div class="offcanvas-body">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col">
+                    <strong>@Options.Value.ConsentNecessaryOnlyText<a href="@Options.Value.PolicyUrl" target="_blank">Learn more</a></strong>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="offcanvas" @onclick="() => AcceptAsync(false)">
+                        @Options.Value.ConsentNecessaryOnlyText
+                    </button>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="offcanvas" @onclick="() => AcceptAsync(true)">
+                        @Options.Value.ConsentAcceptAllText
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] protected IOptions<CookieConsentOptions> Options { get; set; }
+
+    [Inject]  protected CookieConsentService CookieConsentService { get; set; }
+
+    // [Inject]  public CookieConsentLocalizer Localizer { get; set; }
+
+    private async Task AcceptAsync(bool all)
+    {
+        if (all)
+        {
+            await CookieConsentService.SavePreferencesAcceptAllAsync();
+        }
+        else
+        {
+            await CookieConsentService.SavePreferencesNecessaryOnlyAsync();
+        }
+
+        await OnClosePrompt.InvokeAsync();
+
+        StateHasChanged();
+    }
+
+}
