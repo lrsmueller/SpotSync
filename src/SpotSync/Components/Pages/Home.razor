@@ -1,34 +1,216 @@
 ﻿@page "/"
-@inject NavigationManager NavigationManager
+@using SpotifyAPI.Web
 
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ApplicationDbContext context
+@inject IConfiguration configuration
 <PageTitle>Home</PageTitle>
 
 <div class="row row-deck row-cards">
 	<div class="col-4">
 		<div class="card">
-			<div class="card-body" style="height: 10rem"></div>
+			<div class="card-header">
+				<span class="card-title">All Playlists</span>
+				<div class="card-actions">
+					<button class="btn btn-primary btn-icon" @onclick=AddPlaylistButtonClicked>
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-plus">
+							<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+							<path d="M12 5l0 14" />
+							<path d="M5 12l14 0" />
+						</svg>
+
+					</button>
+				</div>
+			</div>
+			<div class="card-body">
+				<ul>
+					@foreach (var playlist in Playlists?.Items.Where(x => x.Owner?.Id == Me.Id || (bool)(x.Collaborative ?? false)))
+					{
+						<li class="d-flex mb-1">
+							<span class="">
+								@playlist.Name
+							</span>
+							<button class="ms-auto btn btn-success btn-sm" disabled="@(playlist.Id == User.SelectedPlaylist)" @onclick="() =>PlaylistSelected(playlist.Id)">
+								Choose Playlist
+							</button>
+						</li>	
+					}
+				</ul>
+			</div>
 		</div>
 	</div>
 	<div class="col-4">
 		<div class="card">
-			<div class="card-body" style="height: 10rem"></div>
+			<div class="card-header">
+				<span class="card-title">Last Liked Songs</span>
+			</div>
+			<div class="card-body">
+				@foreach(var track in SavedTracks.Take(30))
+				{
+					<li class="d-flex">
+						@track.Track.Name on @track.Track.Album.Name by @track.Track.Artists.First().Name
+					</li>
+				}
+			</div>
 		</div>
 	</div>
 	<div class="col-4">
 		<div class="card">
-			<div class="card-body" style="height: 10rem"></div>
-		</div>
-	</div>
-	<div class="col-12">
-		<div class="card">
-			<div class="card-body" style="height: 10rem"></div>
+			<div class="card-header">
+				<span class="card-title">Settings</span>
+				<div class="card-actions">
+				</div>
+			</div>
+			<div class="card-body">
+				<span >@User.LastRefresh?</span>
+				<label class="col-5 col-form-label">Refresh Time</label>
+				<InputSelect 
+					class="col form-select"
+					@bind-Value="User.RefreshHour"
+					@bind-Value:after=RefreshTimeUpdated>
+					<option value="0">0 Clock</option>
+					<option value="1">1 Clock</option>
+					<option value="2">2 Clock</option>
+					<option value="3">3 Clock</option>
+					<option value="4">4 Clock</option>
+					<option value="5">5 Clock</option>
+					<option value="6">6 Clock</option>
+					<option value="7">7 Clock</option>
+					<option value="8">8 Clock</option>
+					<option value="9">9 Clock</option>
+					<option value="10">10 Clock</option>
+					<option value="11">11 Clock</option>
+					<option value="12">12 Clock</option>
+					<option value="13">13 Clock</option>
+					<option value="14">14 Clock</option>
+					<option value="15">15 Clock</option>
+					<option value="16">16 Clock</option>
+					<option value="17">17 Clock</option>
+					<option value="18">18 Clock</option>
+					<option value="19">19 Clock</option>
+					<option value="20">20 Clock</option>
+					<option value="21">21 Clock</option>
+					<option value="22">22 Clock</option>
+					<option value="23">23 Clock</option>
+				</InputSelect>
+			</div>
 		</div>
 	</div>
 </div>
-
-
-@* <h1>Hello, world!</h1> *@
-
-Welcome to your new app.
 @code {
+
+	private readonly string AccesTokenName = "access_token";
+	private readonly string RefreshTokenName = "refresh_token";
+	private readonly string TokenTypeName = "token_type";
+	private readonly string ExpiresAtName = "expires_at";
+
+	private ApplicationUser User { get; set; } = new();
+
+	private SpotifyClient Spotify;
+
+	private Paging<FullPlaylist> Playlists { get; set; } = new() { Items = new() };
+	private List<SavedTrack> SavedTracks { get; set; } = new();
+	public PrivateUser Me;
+
+	protected override async Task OnParametersSetAsync()
+	{
+		var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+		if(authState.User.Identity.IsAuthenticated)
+		{
+			var UserStringId = authState.User.FindFirst(c => c.Type.Contains("nameidentifier"))?.Value;
+			User = context.Users.Find(UserStringId);
+			var tokens = context.UserTokens.Where(x => x.UserId == UserStringId)
+				.Where(x=>x.LoginProvider == "Spotify")
+				.ToDictionary(x=>x.Name);
+			AuthorizationCodeTokenResponse response;
+
+			if (tokens.ContainsKey(AccesTokenName) && tokens.ContainsKey(RefreshTokenName) 
+			&& tokens.ContainsKey(TokenTypeName) && tokens.ContainsKey(ExpiresAtName))
+			{
+				var scopes = new List<string> {
+					Scopes.UserReadEmail, Scopes.UserReadPrivate, Scopes.PlaylistReadPrivate, Scopes.PlaylistReadCollaborative, Scopes.PlaylistModifyPrivate, Scopes.PlaylistModifyPublic, Scopes.UserLibraryRead
+					};
+
+				response = new AuthorizationCodeTokenResponse()
+				{
+						AccessToken = tokens[AccesTokenName].Value,
+						TokenType = tokens[TokenTypeName].Value,
+						RefreshToken = tokens[RefreshTokenName].Value,
+						ExpiresIn = 3600,
+						Scope = string.Join(",", scopes)
+				};
+				response.CreatedAt = DateTimeOffset.Parse(tokens[ExpiresAtName].Value).DateTime.AddSeconds(-3600);
+				var config = SpotifyClientConfig.CreateDefault()
+					.WithAuthenticator(new AuthorizationCodeAuthenticator(configuration["SPOTIFY_CLIENT_ID"], configuration["SPOTIFY_CLIENT_SECRET"], response));
+				Spotify = new SpotifyClient(config);
+				Playlists = await Spotify.Playlists?.CurrentUsers();
+				await GetLast100LikedTracks();
+				Me = await Spotify.UserProfile.Current();
+			}
+		}
+	}
+
+	private void AddPlaylistButtonClicked(MouseEventArgs e)
+	{
+
+	}
+
+	private void RefreshTimeUpdated()
+	{
+		context.SaveChanges();
+	}
+
+	private async Task PlaylistSelected(string playlistId)
+	{
+		User.SelectedPlaylist = playlistId;
+		context.SaveChanges();
+		await SyncPlaylist();
+	}
+
+	private async Task GetLast100LikedTracks()
+	{
+		var _1 = await Spotify.Library.GetTracks(new LibraryTracksRequest()
+			{
+				Limit = 50,
+
+			});
+		var _2 = await Spotify.Library.GetTracks(new LibraryTracksRequest()
+			{
+				Limit = 50,
+				Offset = 50
+			});
+		var _ = new List<SavedTrack>();
+		_.AddRange(_1.Items ?? new());
+		_.AddRange(_2.Items ?? new());
+		SavedTracks = _;
+	}
+
+	private async Task SyncPlaylist()
+	{
+		
+		if (User is not null && !string.IsNullOrWhiteSpace(User.SelectedPlaylist))
+		{	
+			if(SavedTracks.Count != 100)
+			{
+				await GetLast100LikedTracks();
+			}
+
+			var trackUris = new PlaylistReplaceItemsRequest(SavedTracks
+				.Select(e => e.Track.Uri)
+				.ToList());
+			try
+			{
+
+				await Spotify.Playlists.ReplaceItems(User.SelectedPlaylist, trackUris);
+			}
+			catch (Exception ex)
+			{
+				var _ = ex;
+			}
+
+			User.LastRefresh = DateTimeOffset.UtcNow;
+			context.SaveChanges();
+		}
+	}
 }
