@@ -1,4 +1,6 @@
-﻿@using BytexDigital.Blazor.Components.CookieConsent
+﻿﻿@using System.Globalization
+@using BytexDigital.Blazor.Components.CookieConsent.Internal
+@using BytexDigital.Blazor.Components.CookieConsent
 @using BytexDigital.Blazor.Components.CookieConsent.Dialogs.Prompts
 @using Microsoft.Extensions.Options
 @inherits CookieConsentPromptComponentBase
@@ -8,16 +10,20 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col">
-                    <strong>@Options.Value.ConsentNecessaryOnlyText<a href="@Options.Value.PolicyUrl" target="_blank">Learn more</a></strong>
+                    <strong>
+                        @Options.Value.ConsentTitleText.GetLocalization(CultureCode,"en") 🍪 
+                    </strong>
+                    @Options.Value.ConsentDescriptionText.GetLocalization(CultureCode, "en")
+                    <a class="ms-1" href="@Options.Value.PolicyUrl" target="_blank">@Options.Value.ShowPolicyText.GetLocalization(CultureCode, "en")</a>
                 </div>
                 <div class="col-auto">
                     <button type="button" class="btn btn-primary" data-bs-dismiss="offcanvas" @onclick="() => AcceptAsync(false)">
-                        @Options.Value.ConsentNecessaryOnlyText
+                        @Options.Value.ConsentNecessaryOnlyText.GetLocalization(CultureCode, "en")
                     </button>
                 </div>
                 <div class="col-auto">
                     <button type="button" class="btn btn-primary" data-bs-dismiss="offcanvas" @onclick="() => AcceptAsync(true)">
-                        @Options.Value.ConsentAcceptAllText
+                        @Options.Value.ConsentAcceptAllText.GetLocalization(CultureCode, "en")
                     </button>
                 </div>
             </div>
@@ -29,6 +35,10 @@
     [Inject] protected IOptions<CookieConsentOptions> Options { get; set; }
 
     [Inject]  protected CookieConsentService CookieConsentService { get; set; }
+
+    private string CultureCode => CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+
+    // [Inject] public BytexDigital.Blazor.Components.CookieConsent.Dialogs.Prompts.Default.CookieConsentDefaultPrompt. Localizer { get; set; }
 
     // [Inject]  public CookieConsentLocalizer Localizer { get; set; }
 
