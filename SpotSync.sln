@@ -8,7 +8,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solutions Items", "Solution
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "build\_build.csproj", "{8A2E0482-77BE-402F-B63E-0FF4C51147E0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "build", "build\build.csproj", "{8A2E0482-77BE-402F-B63E-0FF4C51147E0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpotSync", "src\SpotSync\SpotSync.csproj", "{E506DE06-A1EA-46DF-8EA6-1CD1832D93F8}"
 EndProject
