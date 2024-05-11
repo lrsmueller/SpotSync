@@ -30,7 +30,7 @@ builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 //builder.Services.AddSingleton(SpotifyClientConfig.CreateDefault());
 
-builder.Services.Configure<SpotifySettings>(o =>
+builder.Services.Configure<SpotifyOptions>(o =>
 {
 	o.SpotifyClientId = builder.Configuration["SPOTIFY_CLIENT_ID"] ?? throw new InvalidOperationException("SPOTIFY_CLIENT_ID not found.");
     o.SpotifyClientSecret = builder.Configuration["SPOTIFY_CLIENT_SECRET"] ?? throw new InvalidOperationException("SPOTIFY_CLIENT_SECRET not found.");
@@ -51,8 +51,8 @@ builder.Services.AddAuthentication(options =>
 	})
 	.AddSpotify(options =>
 	{
-		options.ClientId = builder.Configuration[SpotifySettings.SpotifyClientIdName] ?? throw new InvalidOperationException($"{SpotifySettings.SpotifyClientIdName} not found.");
-		options.ClientSecret = builder.Configuration[SpotifySettings.SpotifyClientSecretName] ?? throw new InvalidOperationException($"{SpotifySettings.SpotifyClientSecretName} not found.");
+		options.ClientId = builder.Configuration[SpotifyOptions.SpotifyClientIdName] ?? throw new InvalidOperationException($"{SpotifyOptions.SpotifyClientIdName} not found.");
+		options.ClientSecret = builder.Configuration[SpotifyOptions.SpotifyClientSecretName] ?? throw new InvalidOperationException($"{SpotifyOptions.SpotifyClientSecretName} not found.");
 		options.CallbackPath = "/Auth/callback";
 		options.SaveTokens = true;
 

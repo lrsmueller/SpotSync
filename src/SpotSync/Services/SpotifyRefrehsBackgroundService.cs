@@ -15,11 +15,11 @@ public class SpotifyRefrehsBackgroundService : BackgroundService
 
     private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
 
-    private readonly IOptions<SpotifySettings> _spotifySettings ;
+    private readonly IOptions<SpotifyOptions> _spotifySettings ;
 
     private DateTime _nextRun;
 
-    public SpotifyRefrehsBackgroundService(IDbContextFactory<ApplicationDbContext> contextFactory, ILogger<SpotifyRefrehsBackgroundService> logger, IOptions<SpotifySettings> spotifySettings)
+    public SpotifyRefrehsBackgroundService(IDbContextFactory<ApplicationDbContext> contextFactory, ILogger<SpotifyRefrehsBackgroundService> logger, IOptions<SpotifyOptions> spotifySettings)
     {
         _logger = logger;
         _contextFactory = contextFactory;

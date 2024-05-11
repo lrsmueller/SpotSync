@@ -14,7 +14,7 @@ namespace SpotSync.Services
         public readonly int ExpiresSeconds = -3600;
 
         private readonly IUserService _userService;
-        private readonly IOptions<SpotifySettings> _spotifySettings;
+        private readonly IOptions<SpotifyOptions> _spotifySettings;
 
         private SpotifyClient SpotifyClient;
 
@@ -26,7 +26,7 @@ namespace SpotSync.Services
                     Scopes.PlaylistModifyPublic,
                     Scopes.UserLibraryRead];
 
-        public SpotifyService(IUserService userService, IOptions<SpotifySettings> options)
+        public SpotifyService(IUserService userService, IOptions<SpotifyOptions> options)
         {
             _userService = userService;
             _spotifySettings = options;
