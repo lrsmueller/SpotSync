@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using SpotifyAPI.Web;
+using SpotifyAPI.Web.Http;
 using SpotSync.Common;
 using SpotSync.Data;
 using SpotSync.Interfaces;
@@ -11,8 +13,8 @@ namespace SpotSync.Services
     {
         public readonly int ExpiresSeconds = -3600;
 
-        private readonly IConfiguration _configuration;
         private readonly IUserService _userService;
+        private readonly IOptions<SpotifySettings> _spotifySettings;
 
         private SpotifyClient SpotifyClient;
 
@@ -24,33 +26,23 @@ namespace SpotSync.Services
                     Scopes.PlaylistModifyPublic,
                     Scopes.UserLibraryRead];
 
-        public SpotifyService(IConfiguration configuration, IUserService userService)
+        public SpotifyService(IUserService userService, IOptions<SpotifySettings> options)
         {
-            _configuration = configuration;
             _userService = userService;
+            _spotifySettings = options;
         }
 
         public async Task<SpotifyClient> BuildClientAsync(CancellationToken cancellationToken = default)
         {
             if (SpotifyClient != null) { return SpotifyClient; }
-            ArgumentException.ThrowIfNullOrWhiteSpace(_configuration["SPOTIFY_CLIENT_ID"], "SPOTIFY_CLIENT_ID");
-            ArgumentException.ThrowIfNullOrWhiteSpace(_configuration["SPOTIFY_CLIENT_SECRET"], "SPOTIFY_CLIENT_SECRET");
 
 
 
             var tokens = await _userService.GetUserTokensAsync(cancellationToken);
-            var response = new AuthorizationCodeTokenResponse()
-            {
-                AccessToken = tokens[SpotifyToken.Access].Value,
-                TokenType = tokens[SpotifyToken.Type].Value,
-                RefreshToken = tokens[SpotifyToken.Refresh].Value,
-                ExpiresIn = 3600,
-                Scope = string.Join(",", scopes)
-            };
-            response.CreatedAt = DateTimeOffset.Parse(tokens[SpotifyToken.ExpiresAt].Value).DateTime.AddSeconds(ExpiresSeconds);
             var config = SpotifyClientConfig
                 .CreateDefault()
-                .WithAuthenticator(new AuthorizationCodeAuthenticator(_configuration["SPOTIFY_CLIENT_ID"], _configuration["SPOTIFY_CLIENT_SECRET"], response));
+                .WithHTTPLogger(new SimpleConsoleHTTPLogger())
+                .WithAuthenticator(new AuthorizationCodeAuthenticator(_spotifySettings.Value.SpotifyClientId, _spotifySettings.Value.SpotifyClientSecret, tokens.CreateAuthResponse()));
             SpotifyClient = new SpotifyClient(config);
 
             return SpotifyClient;

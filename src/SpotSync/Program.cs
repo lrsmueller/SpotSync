@@ -12,6 +12,7 @@ using BytexDigital.Blazor.Components.CookieConsent;
 using SpotSync.Components.Cookie;
 using SpotSync.Services;
 using SpotSync.Interfaces;
+using SpotSync;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,11 +28,13 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
-
 //builder.Services.AddSingleton(SpotifyClientConfig.CreateDefault());
 
-builder.Services.AddScoped<IUserService,UserService>();
-builder.Services.AddScoped<ISpotifyService, SpotifyService>();
+builder.Services.Configure<SpotifySettings>(o =>
+{
+	o.SpotifyClientId = builder.Configuration["SPOTIFY_CLIENT_ID"] ?? throw new InvalidOperationException("SPOTIFY_CLIENT_ID not found.");
+    o.SpotifyClientSecret = builder.Configuration["SPOTIFY_CLIENT_SECRET"] ?? throw new InvalidOperationException("SPOTIFY_CLIENT_SECRET not found.");
+});
 
 builder.Services.AddAuthorization(options =>
 {
@@ -48,8 +51,8 @@ builder.Services.AddAuthentication(options =>
 	})
 	.AddSpotify(options =>
 	{
-		options.ClientId = builder.Configuration["SPOTIFY_CLIENT_ID"] ?? throw new InvalidOperationException("SPOTIFY_CLIENT_ID not found.");
-		options.ClientSecret = builder.Configuration["SPOTIFY_CLIENT_SECRET"] ?? throw new InvalidOperationException("SPOTIFY_CLIENT_SECRET not found.");
+		options.ClientId = builder.Configuration[SpotifySettings.SpotifyClientIdName] ?? throw new InvalidOperationException($"{SpotifySettings.SpotifyClientIdName} not found.");
+		options.ClientSecret = builder.Configuration[SpotifySettings.SpotifyClientSecretName] ?? throw new InvalidOperationException($"{SpotifySettings.SpotifyClientSecretName} not found.");
 		options.CallbackPath = "/Auth/callback";
 		options.SaveTokens = true;
 
