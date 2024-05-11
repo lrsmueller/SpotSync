@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SpotSync.Common;
 using SpotSync.Data;
+using SpotSync.Interfaces;
 
 namespace SpotSync.Services;
 

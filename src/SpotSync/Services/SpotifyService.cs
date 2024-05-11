@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SpotifyAPI.Web;
 using SpotSync.Common;
 using SpotSync.Data;
+using SpotSync.Interfaces;
 
 namespace SpotSync.Services
 {
@@ -11,7 +12,7 @@ namespace SpotSync.Services
         public readonly int ExpiresSeconds = -3600;
 
         private readonly IConfiguration _configuration;
-        private readonly UserService _userService;
+        private readonly IUserService _userService;
 
         private SpotifyClient SpotifyClient;
 
@@ -23,7 +24,7 @@ namespace SpotSync.Services
                     Scopes.PlaylistModifyPublic,
                     Scopes.UserLibraryRead];
 
-        public SpotifyService(IConfiguration configuration, UserService userService)
+        public SpotifyService(IConfiguration configuration, IUserService userService)
         {
             _configuration = configuration;
             _userService = userService;
