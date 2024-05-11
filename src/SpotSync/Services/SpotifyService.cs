@@ -65,12 +65,14 @@ namespace SpotSync.Services
 
             }
             var user = await _userService.GetUserAsync(cancellationToken);
-            var tracks = await GetLast100LikedSongsAsync(cancellationToken);
-            var request = new PlaylistReplaceItemsRequest(tracks
-                .Select(e => e.Track.Uri)
-                .ToList());
+            //var tracks = await GetLast100LikedSongsAsync(cancellationToken);
+            //var request = new PlaylistReplaceItemsRequest(tracks
+            //    .Select(e => e.Track.Uri)
+            //    .ToList());
 
-            await SpotifyClient.Playlists.ReplaceItems(user.SelectedPlaylist, request, cancellationToken);
+            //await SpotifyClient.Playlists.ReplaceItems(user.SelectedPlaylist, request, cancellationToken);
+
+            await RefreshSelectedPlaylistAsync(SpotifyClient,user.SelectedPlaylist, cancellationToken);
         }
 
         public async Task<List<SavedTrack>> GetLast100LikedSongsAsync(CancellationToken cancellationToken = default)
@@ -91,6 +93,18 @@ namespace SpotSync.Services
         public async Task<PrivateUser> GetProfileAsync(CancellationToken cancellationToken = default)
         {
             return await GetProfileAsync(SpotifyClient, cancellationToken);
+        }
+
+
+        public static async Task RefreshSelectedPlaylistAsync(SpotifyClient client, string playlist, CancellationToken cancellationToken = default)
+        {
+            
+            var tracks = await GetLast100LikedSongsAsync(client,cancellationToken);
+            var request = new PlaylistReplaceItemsRequest(tracks
+                .Select(e => e.Track.Uri)
+                .ToList());
+
+            await client.Playlists.ReplaceItems(playlist, request, cancellationToken);
         }
 
         public static async Task<List<SavedTrack>> GetLast100LikedSongsAsync(SpotifyClient client, CancellationToken cancellationToken = default)

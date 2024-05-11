@@ -21,8 +21,7 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // Add services to the container.
-builder.Services.AddRazorComponents()
-	.AddInteractiveServerComponents();
+builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
@@ -76,6 +75,10 @@ builder.Services.AddAuthentication(options =>
 	})
 	.AddIdentityCookies();
 
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ISpotifyService, SpotifyService>();
+
+builder.Services.AddHostedService<SpotifyRefrehsBackgroundService>();
 
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
