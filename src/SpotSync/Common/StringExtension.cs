@@ -1,4 +1,4 @@
-﻿namespace SpotSync;
+﻿namespace SpotSync.Common;
 
 public static class StringExtension
 {

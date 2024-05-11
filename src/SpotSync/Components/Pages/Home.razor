@@ -1,10 +1,15 @@
 ﻿@page "/"
+@using Microsoft.EntityFrameworkCore
+@using SpotSync.Interfaces
+@using SpotSync.Models
 @using SpotifyAPI.Web
 
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject ApplicationDbContext context
+@inject IDbContextFactory<ApplicationDbContext> dbContextFactory
 @inject IConfiguration configuration
+@inject IUserService userSerivce
+
 <PageTitle>Home</PageTitle>
 
 <div class="row row-deck row-cards">
@@ -13,7 +18,7 @@
 			<div class="card-header">
 				<span class="card-title">All Playlists</span>
 				<div class="card-actions">
-					<button class="btn btn-primary btn-icon" @onclick=AddPlaylistButtonClicked>
+					<button class="btn btn-primary btn-icon" data-bs-toggle="modal" data-bs-target="#addPlaylistModal">
 						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-plus">
 							<path stroke="none" d="M0 0h24v24H0z" fill="none" />
 							<path d="M12 5l0 14" />
@@ -100,6 +105,54 @@
 		</div>
 	</div>
 </div>
+
+<EditForm Model="addPlaylistModel" class="modal" id="addPlaylistModal" tabindex="-1" OnValidSubmit="AddPlaylistSubmit" FormName="addPlaylistModal">
+	<DataAnnotationsValidator />
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Add Playlist</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<div class="mb-3">
+					<label class="form-label required">@nameof(addPlaylistModel.Name)</label>
+					<InputText @bind-Value=addPlaylistModel.Name type="text" class="form-control" name="example-text-input" placeholder="Your report name" />
+				</div>
+				
+				<div>
+					<label class="row">
+						<span class="col">@nameof(addPlaylistModel.Public)</span>
+						<span class="col-auto">
+							<label class="form-check form-check-single form-switch">
+								<InputCheckbox class="form-check-input" type="checkbox" @bind-Value=addPlaylistModel.Public />
+							</label>
+						</span>
+					</label>
+				</div>
+				<div>
+					<label class="row">
+						<span class="col">@nameof(addPlaylistModel.Collaborative)</span>
+						<span class="col-auto">
+							<label class="form-check form-check-single form-switch">
+								<InputCheckbox class="form-check-input" type="checkbox" @bind-Value=addPlaylistModel.Collaborative />
+							</label>
+						</span>
+					</label>
+				</div>
+				
+				<div class="mb-3">
+					<label class="form-label">@nameof(addPlaylistModel.Description)</label>
+					<InputTextArea class="form-control" rows="3" @bind-Value=addPlaylistModel.Description></InputTextArea>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn me-auto" data-bs-dismiss="modal">Close</button>
+				<button type="submit" class="btn btn-primary" >Add Playlist</button>
+			</div>
+		</div>
+	</div>
+</EditForm>
 @code {
 
 	[CascadingParameter] public ISpotifyService SpotifyService { get; set; }
@@ -126,9 +179,9 @@
 		Playlists = await SpotifyService.GetPlaylistsAsync();
 	}
 
-	private void AddPlaylistButtonClicked(MouseEventArgs e)
+	private async Task AddPlaylistSubmit()
 	{
-
+		await SpotifyService.AddPlaylistAsync(addPlaylistModel.ToRequest());
 	}
 
 	private async Task RefreshTimeUpdated()
