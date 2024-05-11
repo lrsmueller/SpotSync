@@ -25,6 +25,7 @@
 			</div>
 			<div class="card-body">
 				<ul>
+					@*TODO Pagination*@
 					@foreach (var playlist in Playlists?.Items.Where(x => x.Owner?.Id == Me.Id || (bool)(x.Collaborative ?? false)))
 					{
 						<li class="d-flex mb-1">
@@ -46,7 +47,8 @@
 				<span class="card-title">Last Liked Songs</span>
 			</div>
 			<div class="card-body">
-				@foreach(var track in SavedTracks.Take(30))
+				@*TODO Pagination*@
+				@foreach(var track in SavedTracks.Take(20))
 				{
 					<li class="d-flex">
 						@track.Track.Name on @track.Track.Album.Name by @track.Track.Artists.First().Name
@@ -100,6 +102,8 @@
 </div>
 @code {
 
+	[CascadingParameter] public ISpotifyService SpotifyService { get; set; }
+
 	private readonly string AccesTokenName = "access_token";
 	private readonly string RefreshTokenName = "refresh_token";
 	private readonly string TokenTypeName = "token_type";
@@ -107,48 +111,19 @@
 
 	private ApplicationUser User { get; set; } = new();
 
-	private SpotifyClient Spotify;
-
 	private Paging<FullPlaylist> Playlists { get; set; } = new() { Items = new() };
 	private List<SavedTrack> SavedTracks { get; set; } = new();
-	public PrivateUser Me;
+	public PrivateUser Me = new();
+
+	protected AddPlaylistModel addPlaylistModel = new();
 
 	protected override async Task OnParametersSetAsync()
 	{
-		var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-		if(authState.User.Identity.IsAuthenticated)
-		{
-			var UserStringId = authState.User.FindFirst(c => c.Type.Contains("nameidentifier"))?.Value;
-			User = context.Users.Find(UserStringId);
-			var tokens = context.UserTokens.Where(x => x.UserId == UserStringId)
-				.Where(x=>x.LoginProvider == "Spotify")
-				.ToDictionary(x=>x.Name);
-			AuthorizationCodeTokenResponse response;
-
-			if (tokens.ContainsKey(AccesTokenName) && tokens.ContainsKey(RefreshTokenName) 
-			&& tokens.ContainsKey(TokenTypeName) && tokens.ContainsKey(ExpiresAtName))
-			{
-				var scopes = new List<string> {
-					Scopes.UserReadEmail, Scopes.UserReadPrivate, Scopes.PlaylistReadPrivate, Scopes.PlaylistReadCollaborative, Scopes.PlaylistModifyPrivate, Scopes.PlaylistModifyPublic, Scopes.UserLibraryRead
-					};
-
-				response = new AuthorizationCodeTokenResponse()
-				{
-						AccessToken = tokens[AccesTokenName].Value,
-						TokenType = tokens[TokenTypeName].Value,
-						RefreshToken = tokens[RefreshTokenName].Value,
-						ExpiresIn = 3600,
-						Scope = string.Join(",", scopes)
-				};
-				response.CreatedAt = DateTimeOffset.Parse(tokens[ExpiresAtName].Value).DateTime.AddSeconds(-3600);
-				var config = SpotifyClientConfig.CreateDefault()
-					.WithAuthenticator(new AuthorizationCodeAuthenticator(configuration["SPOTIFY_CLIENT_ID"], configuration["SPOTIFY_CLIENT_SECRET"], response));
-				Spotify = new SpotifyClient(config);
-				Playlists = await Spotify.Playlists?.CurrentUsers();
-				await GetLast100LikedTracks();
-				Me = await Spotify.UserProfile.Current();
-			}
-		}
+		User = await userSerivce.GetUserAsync();
+		var _ = await SpotifyService.BuildClientAsync();
+		SavedTracks = await SpotifyService.GetLast100LikedSongsAsync();
+		Me = await SpotifyService.GetProfileAsync();
+		Playlists = await SpotifyService.GetPlaylistsAsync();
 	}
 
 	private void AddPlaylistButtonClicked(MouseEventArgs e)
@@ -156,61 +131,15 @@
 
 	}
 
-	private void RefreshTimeUpdated()
+	private async Task RefreshTimeUpdated()
 	{
-		context.SaveChanges();
+		await userSerivce.UpdateRefreshTimeAsync(User.RefreshHour);
 	}
 
 	private async Task PlaylistSelected(string playlistId)
 	{
-		User.SelectedPlaylist = playlistId;
-		context.SaveChanges();
-		await SyncPlaylist();
+		await userSerivce.UpdatePlaylistAsync(playlistId);
 	}
 
-	private async Task GetLast100LikedTracks()
-	{
-		var _1 = await Spotify.Library.GetTracks(new LibraryTracksRequest()
-			{
-				Limit = 50,
-
-			});
-		var _2 = await Spotify.Library.GetTracks(new LibraryTracksRequest()
-			{
-				Limit = 50,
-				Offset = 50
-			});
-		var _ = new List<SavedTrack>();
-		_.AddRange(_1.Items ?? new());
-		_.AddRange(_2.Items ?? new());
-		SavedTracks = _;
-	}
-
-	private async Task SyncPlaylist()
-	{
-		
-		if (User is not null && !string.IsNullOrWhiteSpace(User.SelectedPlaylist))
-		{	
-			if(SavedTracks.Count != 100)
-			{
-				await GetLast100LikedTracks();
-			}
-
-			var trackUris = new PlaylistReplaceItemsRequest(SavedTracks
-				.Select(e => e.Track.Uri)
-				.ToList());
-			try
-			{
-
-				await Spotify.Playlists.ReplaceItems(User.SelectedPlaylist, trackUris);
-			}
-			catch (Exception ex)
-			{
-				var _ = ex;
-			}
-
-			User.LastRefresh = DateTimeOffset.UtcNow;
-			context.SaveChanges();
-		}
-	}
+	
 }

@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Identity
 @using SpotSync.Components.Account
 @using SpotSync.Data
+@using SpotSync.Interfaces
 @inject AuthenticationStateProvider AuthenticationStateProvider
 <header class="navbar navbar-expand-md navbar-transparent d-print-none">
     <div class="container-xl">
@@ -61,14 +62,14 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/">
-                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                        <button class="nav-link" @onclick=HandleRefreshClick>
+                            <span class="@RotatingIconCss">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-refresh"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></svg>
                             </span>
                             <span class="nav-link-title">
                                 Refresh Playlist
                             </span>
-                        </a>
+                        </button>
                     </li>
 
                 </ul>
@@ -76,29 +77,53 @@
         </div>
     </div>
 </header>
+<style>
+    .rotate {
+        transition: 2s;
+    }
+
+    .rotating {
+        transform: rotate(720deg);
+    }
+</style>
+
 @code {
-	private ClaimsPrincipal? user;
+    [CascadingParameter] ISpotifyService SpotifyService { get; set; }
 
-	private string productString;
-	private string profilePicture;
+    private ClaimsPrincipal? user;
 
-	protected override async Task OnParametersSetAsync()
-	{
-		var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-		user = authState.User;
+    private string productString;
+    private string profilePicture;
 
-		if (user.Identity is not null && user.Identity.IsAuthenticated)
-		{
-			if (user.HasClaim(c => c.Type == SpotifyClaimTypes.Product))
-			{
-				productString = user.Claims.First(c => c.Type == SpotifyClaimTypes.Product).Value;
-			}
+    private string RotatingIconCss = "nav-link-icon d-md-none d-lg-inline-block rotate";
 
-			if (user.HasClaim(c => c.Type == SpotifyClaimTypes.ProfilePicture))
-			{
-				profilePicture = user.Claims.First(c => c.Type == SpotifyClaimTypes.ProfilePicture).Value;
-			}
+    protected override async Task OnParametersSetAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
 
-		}
-	}
+        if (user.Identity is not null && user.Identity.IsAuthenticated)
+        {
+            if (user.HasClaim(c => c.Type == SpotifyClaimTypes.Product))
+            {
+                productString = user.Claims.First(c => c.Type == SpotifyClaimTypes.Product).Value;
+            }
+
+            if (user.HasClaim(c => c.Type == SpotifyClaimTypes.ProfilePicture))
+            {
+                profilePicture = user.Claims.First(c => c.Type == SpotifyClaimTypes.ProfilePicture).Value;
+            }
+
+        }
+    }
+
+    protected async Task HandleRefreshClick(MouseEventArgs e)
+    {
+        RotatingIconCss = "nav-link-icon d-md-none d-lg-inline-block rotate rotating";
+        StateHasChanged();
+        await SpotifyService.RefreshSelectedPlaylistAsync();
+        await Task.Delay(2000);
+        RotatingIconCss = "nav-link-icon d-md-none d-lg-inline-block rotate";
+        StateHasChanged();
+    }
 }

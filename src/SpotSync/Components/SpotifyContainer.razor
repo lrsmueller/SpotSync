@@ -1,0 +1,15 @@
+﻿@using SpotSync.Interfaces
+<CascadingValue Value="SpotifyService">
+	@ChildContent
+</CascadingValue>
+
+@code {
+	[Inject] public ISpotifyService SpotifyService { get; set; }
+
+	[Parameter] public RenderFragment ChildContent { get; set; }
+
+	protected override async Task OnParametersSetAsync()
+	{
+		await SpotifyService.BuildClientAsync();
+	}
+}

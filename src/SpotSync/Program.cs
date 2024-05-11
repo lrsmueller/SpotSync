@@ -5,14 +5,20 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SpotifyAPI.Web;
 using SpotSync.Components;
-using SpotSync;
 using SpotSync.Components.Account;
 using SpotSync.Data;
 using static SpotifyAPI.Web.Scopes;
 using BytexDigital.Blazor.Components.CookieConsent;
 using SpotSync.Components.Cookie;
+using SpotSync.Services;
+using SpotSync.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+	options.UseSqlServer(connectionString));
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -23,8 +29,10 @@ builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
-builder.Services.AddSingleton(SpotifyClientConfig.CreateDefault());
-builder.Services.AddScoped<SpotifyClientBuilder>();
+//builder.Services.AddSingleton(SpotifyClientConfig.CreateDefault());
+
+builder.Services.AddScoped<IUserService,UserService>();
+builder.Services.AddScoped<ISpotifyService, SpotifyService>();
 
 builder.Services.AddAuthorization(options =>
 {
@@ -68,10 +76,7 @@ builder.Services.AddAuthentication(options =>
 	})
 	.AddIdentityCookies();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-	options.UseSqlServer(connectionString));
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
 	{
