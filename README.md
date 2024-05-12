@@ -22,11 +22,12 @@
 - [ ] add Button feedback (Refresh Time, Playlist Change, Add Playlist, Refresh Playlist)
 - [ ] Add Privacy Policy
 - [ ] update logo 
-- [ ] add responsive to cards
+- [x] add responsive to cards
 - [ ] add Hosting ?
 	- [ ] Continous Delivery for Github Actions
 - [ ] add Explaination 
 - [ ] update Landing page
+- [ ] add loading animation when content is empty
 - Strucutre
 	- src/SpotSync RENAME
 	- build -> NUKE build
