@@ -68,16 +68,16 @@ public class SpotifyRefrehsBackgroundService : BackgroundService
         foreach(var config in configs)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            //var _ = new SpotifyClient(config.Config);
-            //await SpotifyService.RefreshSelectedPlaylistAsync(_, config.User.SelectedPlaylist, cancellationToken);
-            
+            var _ = new SpotifyClient(config.Config);
+            await SpotifyService.RefreshSelectedPlaylistAsync(_, config.User.SelectedPlaylist, cancellationToken);
+
         }
 
         using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
         await context.Users
             .Where(y=>users.Select(x=>x.Id).Contains(y.Id))
             .ExecuteUpdateAsync(str => str.SetProperty(b => b.LastRefresh, _nextRun), cancellationToken);
-        _nextRun.AddHours(1);
+        _nextRun = _nextRun.AddHours(1);
         _logger.LogInformation($"Run Finished. Nex Run is at {_nextRun}");
     }
 
