@@ -1,0 +1,12 @@
+ <svg xmlns="http://www.w3.org/2000/svg" width="125" height="30" viewBox="0 0 24 24" fill="none"
+    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#29bf5d">
+    <!-- <path stroke="none" d="M0 0h24v24H0z" fill="red" /> -->
+    <path d="M-20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" stroke-width="1.7" />
+    <path d="M-36 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" stroke-width="1.7"/>
+    <path d="M-30 8v8l6 -4z" stroke-width="1.7"/>
+	
+	<text y="17" x="-15" fill="#29bf5d" font-family="Cambria"  letter-spacing="1.0" font-style="italic" font-weight="100" >
+        Spot Sync
+    </text>
+    
+</svg>
