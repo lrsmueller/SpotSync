@@ -1,0 +1,34 @@
+@using SpotSync.Models
+<div class="toast-container position-absolute top-0 end-0 p-3">
+    @foreach (MessengerMessage message in _messages)
+    {
+        <div class="toast show @message.CssClass" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false" data-bs-toggle="toast" @key=message.Key>
+            <div class="toast-header">
+                @if (message.HeaderTemplate != null)
+                {
+                    @message.HeaderTemplate
+                    ;
+                }
+                else
+                {
+                    @* <span class="avatar avatar-xs me-2" style="background-image: url(...)" ></span> *@
+                    <strong class="me-auto">@message.Title</strong>
+                    @* <small>11 mins ago</small> *@
+                    <button type="button" class="ms-2 btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    
+                }
+                    
+            </div>
+            <div class="toast-body">
+                @if (message.ContentTemplate != null)
+                {
+                    @message.ContentTemplate;
+                }  else
+                {
+                    @message.Text
+                }
+            </div>
+        </div>
+    }
+</div>
+

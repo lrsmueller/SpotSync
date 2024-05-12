@@ -9,7 +9,7 @@
 @inject IDbContextFactory<ApplicationDbContext> dbContextFactory
 @inject IConfiguration configuration
 @inject IUserService userSerivce
-
+@inject IMessageService messageService
 <PageTitle>Home</PageTitle>
 
 <div class="row row-deck row-cards">
@@ -158,10 +158,6 @@
 
 	[CascadingParameter] public ISpotifyService SpotifyService { get; set; }
 
-	private readonly string AccesTokenName = "access_token";
-	private readonly string RefreshTokenName = "refresh_token";
-	private readonly string TokenTypeName = "token_type";
-	private readonly string ExpiresAtName = "expires_at";
 
 	private ApplicationUser User { get; set; } = new();
 
@@ -188,6 +184,11 @@
 	private async Task RefreshTimeUpdated()
 	{
 		await userSerivce.UpdateRefreshTimeAsync(User.RefreshHour);
+		messageService.AddMessage(new()
+			{
+				Title = "Saving successful",
+				Text = "Refresh Time Updated"
+			});
 	}
 
 	private async Task PlaylistSelected(string playlistId)
