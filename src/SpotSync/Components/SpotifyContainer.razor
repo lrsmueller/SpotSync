@@ -6,10 +6,16 @@
 @code {
 	[Inject] public ISpotifyService SpotifyService { get; set; }
 
+	[Inject] public AuthenticationStateProvider authstate { get; set; }
+
 	[Parameter] public RenderFragment ChildContent { get; set; }
 
 	protected override async Task OnParametersSetAsync()
 	{
-		await SpotifyService.BuildClientAsync();
+		var _ = await authstate.GetAuthenticationStateAsync();
+		if(_.User.Identity.IsAuthenticated)
+		{
+			await SpotifyService.BuildClientAsync();
+		}
 	}
 }

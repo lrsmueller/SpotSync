@@ -1,19 +1,19 @@
 ﻿@inherits LayoutComponentBase
-
-<div class="page">
-	<AuthorizeView>
-		<NavBar />
-	</AuthorizeView>
-	<div class="page-wrapper">
-		<div class="page-body">
-			<div class="container-xl">
-				@Body
+<SpotifyContainer>
+	<div class="page">
+		<AuthorizeView>
+			<NavBar />
+		</AuthorizeView>
+		<div class="page-wrapper">
+			<div class="page-body">
+				<div class="container-xl">
+					@Body
+				</div>
 			</div>
 		</div>
+		<Footer />
 	</div>
-	<Footer />
-</div>
-
+</SpotifyContainer>
 
 @* <div id="blazor-error-ui">
 	An unhandled error has occurred.
