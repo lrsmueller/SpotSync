@@ -11,19 +11,40 @@
             <div class="row align-items-center">
                 <div class="col">
                     <strong>
-                        @Options.Value.ConsentTitleText.GetLocalization(CultureCode,"en") 🍪 
+                        @Options.Value.ConsentTitleText.GetLocalization(CultureCode, DefaultCultureCode)
                     </strong>
-                    @Options.Value.ConsentDescriptionText.GetLocalization(CultureCode, "en")
-                    <a class="ms-1" href="@Options.Value.PolicyUrl" target="_blank">@Options.Value.ShowPolicyText.GetLocalization(CultureCode, "en")</a>
+                    @Options.Value.ConsentDescriptionText.GetLocalization(CultureCode, CultureCode)
+                    <a class="ms-1" href="@Options.Value.PolicyUrl" target="_blank">@Options.Value.ShowPolicyText.GetLocalization(CultureCode, DefaultCultureCode)</a>
                 </div>
                 <div class="col-auto">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="offcanvas" @onclick="() => AcceptAsync(false)">
-                        @Options.Value.ConsentNecessaryOnlyText.GetLocalization(CultureCode, "en")
-                    </button>
+                    @if (!OnlyRequiredCategoriesExist)
+                    {
+                        @if (VariantOptions.SecondaryActionOpensSettings)
+                        {
+                            <button @onclick=OpenSettingsAsync class="btn btn-primary">
+                                @Options.Value.OpenPreferencesText.GetLocalization(CultureCode, DefaultCultureCode)
+                            </button>
+                        }
+                        else
+                        {
+                            <button @onclick="async () => await AcceptAsync(false)" class="btn btn-primary" data-bs-dismiss="offcanvas">
+                                @Options.Value.ConsentNecessaryOnlyText.GetLocalization(CultureCode, DefaultCultureCode)
+                            </button>
+                        }
+                    }
+
+                    
                 </div>
                 <div class="col-auto">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="offcanvas" @onclick="() => AcceptAsync(true)">
-                        @Options.Value.ConsentAcceptAllText.GetLocalization(CultureCode, "en")
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="offcanvas" @onclick="async () => await AcceptAsync(true)">
+                        @if (!OnlyRequiredCategoriesExist)
+                        {
+                            @Options.Value.ConsentAcceptAllText.GetLocalization(CultureCode, DefaultCultureCode)
+                        }
+                        else
+                        {
+                            @Options.Value.ConsentAcknowledgeText.GetLocalization(CultureCode, DefaultCultureCode)
+                        }
                     </button>
                 </div>
             </div>
@@ -32,15 +53,30 @@
 </div>
 
 @code {
-    [Inject] protected IOptions<CookieConsentOptions> Options { get; set; }
+    [Inject]  protected IOptions<CookieConsentOptions> Options { get; set; }
 
-    [Inject]  protected CookieConsentService CookieConsentService { get; set; }
+    protected CookieConsentDefaultPromptVariant VariantOptions => Options.Value.ConsentPromptVariant as CookieConsentDefaultPromptVariant;
 
+    [Inject] protected CookieConsentService CookieConsentService { get; set; }
+
+
+    private bool OnlyRequiredCategoriesExist => Options.Value.Categories.All(x => x.IsRequired);
     private string CultureCode => CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+    private string DefaultCultureCode => "en";
 
-    // [Inject] public BytexDigital.Blazor.Components.CookieConsent.Dialogs.Prompts.Default.CookieConsentDefaultPrompt. Localizer { get; set; }
+    protected override void OnInitialized()
+    {
+        if (Options.Value.ConsentPromptVariant.GetType() != typeof(CustomSettingsPrompt))
+        {
+            throw new InvalidOperationException($"{nameof(CookieConsentOptions)}.{nameof(CookieConsentOptions.ConsentPromptVariant)} must be of type {nameof(CustomSettingsPrompt)}");
+        }
+    }
 
-    // [Inject]  public CookieConsentLocalizer Localizer { get; set; }
+    private async Task OpenSettingsAsync()
+    {
+        await CookieConsentService.ShowConsentModalAsync(false);
+        StateHasChanged();
+    }
 
     private async Task AcceptAsync(bool all)
     {
@@ -57,5 +93,32 @@
 
         StateHasChanged();
     }
+
+
+
+
+    // [Inject] protected IOptions<CookieConsentOptions> Options { get; set; }
+
+    // [Inject]  protected CookieConsentService CookieConsentService { get; set; }
+
+    // private string CultureCode => CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+
+    // [Inject] public BytexDigital.Blazor.Components.CookieConsent.Dialogs.Prompts.Default.CookieConsentDefaultPrompt. Localizer { get; set; }
+
+    // private async Task AcceptAsync(bool all)
+    // {
+    //     if (all)
+    //     {
+    //         await CookieConsentService.SavePreferencesAcceptAllAsync();
+    //     }
+    //     else
+    //     {
+    //         await CookieConsentService.SavePreferencesNecessaryOnlyAsync();
+    //     }
+
+    //     await OnClosePrompt.InvokeAsync();
+
+    //     StateHasChanged();
+    // }
 
 }
