@@ -52,10 +52,12 @@ class Build : NukeBuild
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
     //[Parameter("Docker Image Name")]
-    string DockerImageName => Repository.GetGitHubName().ToLower();
+    string DockerImageName => Repository.GetGitHubName().ToLowerInvariant();
 
-    [Parameter("Docker Image Tag")] readonly string DockerImageTag = "latest";
+    readonly string DockerImageTag = "latest";
     
+    string BaseImageName => $"{DockerImageName}:{DockerImageTag}";
+
     readonly string DockerRegistry = "ghcr.io";
 
     [Solution] readonly Solution Solution;
@@ -116,12 +118,16 @@ class Build : NukeBuild
         DockerBuild(x => x
             .SetPath(".")
             .SetFile(DockerFile)
-            .SetTag($"{DockerImageName}:{DockerImageTag}")
+            .SetTag(BaseImageName)
             .DisableProcessLogOutput());
 
         var repositoryOwner = Repository.GetGitHubOwner().ToLowerInvariant();
         var repositoryName = Repository.GetGitHubName().ToLowerInvariant();
         var targetImageName = $"{DockerRegistry}/{repositoryOwner}/{repositoryName}/{DockerImageName}:{DockerImageTag}";
+
+        DockerTag(settings => settings
+                .SetSourceImage(BaseImageName)
+                .SetTargetImage(targetImageName));
 
         DockerPush(x => x.SetName(targetImageName));
     });
