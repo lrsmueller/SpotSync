@@ -81,7 +81,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISpotifyService, SpotifyService>();
 
-builder.Services.AddHostedService<SpotifyRefrehsBackgroundService>();
+builder.Services.AddHostedService<RefreshBackgroundService>();
 builder.Services.AddScoped<IMessageService, MessengerService>();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>

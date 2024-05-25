@@ -9,9 +9,9 @@ using Microsoft.Extensions.Options;
 
 namespace SpotSync.Services;
 
-public class SpotifyRefrehsBackgroundService : BackgroundService
+public class RefreshBackgroundService : BackgroundService
 {
-    private readonly ILogger<SpotifyRefrehsBackgroundService> _logger;
+    private readonly ILogger<RefreshBackgroundService> _logger;
 
     private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
 
@@ -19,22 +19,27 @@ public class SpotifyRefrehsBackgroundService : BackgroundService
 
     private DateTime _nextRun;
 
-    public SpotifyRefrehsBackgroundService(IDbContextFactory<ApplicationDbContext> contextFactory, ILogger<SpotifyRefrehsBackgroundService> logger, IOptions<SpotifyOptions> spotifySettings)
+    public RefreshBackgroundService(IDbContextFactory<ApplicationDbContext> contextFactory, ILogger<RefreshBackgroundService> logger, IOptions<SpotifyOptions> spotifySettings)
     {
         _logger = logger;
         _contextFactory = contextFactory;
         _spotifySettings = spotifySettings;
-        var now = DateTime.Now;
 
-        _nextRun = new(now.Year, now.Month, now.Day, now.Hour + 1, 0, 0);
-        _logger.LogInformation($"{nameof(SpotifyRefrehsBackgroundService)} started; Next Run is at {_nextRun}");
+		var now = DateTime.Now;
+		var hour = now.Hour >= 23 ? 0 : now.Hour + 1;
+		_nextRun = new(now.Year, now.Month, now.Day, hour, 0, 0);
+
+
+		_logger.LogInformation($"{nameof(RefreshBackgroundService)} initalized; First Run is at {_nextRun}");
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        do
+		do
         {
-            using var timer = new PeriodicTimer(_nextRun.Subtract(DateTime.Now), TimeProvider.System);
+            var timespan = _nextRun.Subtract(DateTime.Now);
+
+			using var timer = new PeriodicTimer(timespan);
             try
             {
                 while (await timer.WaitForNextTickAsync(stoppingToken))
@@ -44,16 +49,8 @@ public class SpotifyRefrehsBackgroundService : BackgroundService
             }
             catch (OperationCanceledException)
             {
-                _logger.LogInformation($"{nameof(SpotifyRefrehsBackgroundService)} is stopping.");
+                _logger.LogInformation($"{nameof(RefreshBackgroundService)} is stopping.");
             }
-
-            //if (_nextRun<=DateTime.Now)
-            //{
-            //    await RunSync(stoppingToken);
-            //} else
-            //{
-            //    await Task.Delay(60000, stoppingToken);
-            //}
         }
         while(!stoppingToken.IsCancellationRequested);
     }
