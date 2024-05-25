@@ -9,10 +9,10 @@
 - [x] Background Sync Service 
 - [x] Save Spotify Data (User Icon/Premium)
 - [x] Cookie Consent 
-	- [ ] Rework with Tabler https://preview.tabler.io/cookie-banner.html
-	- [ ] Exclude Rework to custom nuget 
+	- [x] Rework with Tabler https://preview.tabler.io/cookie-banner.html
+	- [x] Exclude Rework to custom nuget -> Razor CLR
+	- [ ] Consent Settings page/Modal
 - [ ] Localisation
-	- 
 - [ ] update JS Lib
 - [ ] Tests
 	- [ ] bUint
@@ -20,14 +20,21 @@
 - [ ] Restrucutre Model/Ceation of Settigns/Client
 - [ ] access IOption<Settings> in add auth
 - [ ] add Button feedback (Refresh Time, Playlist Change, Add Playlist, Refresh Playlist)
-- [ ] Add Privacy Policy
-- [ ] update logo 
+- [x] Add Privacy Policy
+	- [ ] Check Legal
+- [x] update logo 
 - [x] add responsive to cards
 - [ ] add Hosting ?
 	- [ ] Continous Delivery for Github Actions
 - [ ] add Explaination 
 - [ ] update Landing page
 - [ ] add loading animation when content is empty
+- [ ] Add Spotify Logo 
+- [ ] Fix Double Loading when Login
+- [ ] Spotify Throttle/Rate Limit
+- [ ] Nuke Build/Github Actions
+	- [ ] Build Docker Package
+	- [ ] Publish Image to Azure
 - Strucutre
 	- src/SpotSync RENAME
 	- build -> NUKE build
