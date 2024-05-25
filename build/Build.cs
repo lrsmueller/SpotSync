@@ -12,12 +12,17 @@ using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.DotNet;
 using Nuke.Common.Tools.Git;
 using Nuke.Common.Tools.GitHub;
+using Nuke.Common.Utilities;
 using Nuke.Common.Utilities.Collections;
+using Polly;
+using Serilog;
 using static Nuke.Common.EnvironmentInfo;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.IO.PathConstruction;
 using static Nuke.Common.Tools.Docker.DockerTasks;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
+using static Nuke.Common.Tools.Git.GitTasks;
+using static Nuke.Common.Tools.GitHub.GitHubTasks;
 
 [GitHubActions(
     "docker-publish",
@@ -30,6 +35,12 @@ using static Nuke.Common.Tools.DotNet.DotNetTasks;
 )]
 class Build : NukeBuild
 {
+    public Build()
+    {
+        DockerLogger = (_, message) => Log.Debug(message);
+        GitLogger = (_, message) => Log.Debug(message);
+    }
+
     public static int Main() => Execute<Build>(x => x.Compile);
 
     AbsolutePath SourceDirectory => RootDirectory / "src";
@@ -43,8 +54,9 @@ class Build : NukeBuild
     //[Parameter("Docker Image Name")]
     string DockerImageName => Repository.GetGitHubName().ToLower();
 
-    [Parameter("Docker Image Tag")]
-    readonly string DockerImageTag = "latest";
+    [Parameter("Docker Image Tag")] readonly string DockerImageTag = "latest";
+    
+    readonly string DockerRegistry = "ghcr.io";
 
     [Solution] readonly Solution Solution;
 
@@ -80,6 +92,23 @@ class Build : NukeBuild
     .DependsOn(Compile)
     .Executes(() =>
     {
+
+        Policy
+                .Handle<Exception>()
+                .WaitAndRetry(5,
+                    retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                    (ex, _, retryCount, _) =>
+                    {
+                        Log.Warning($"Docker login exited with code: '{ex}'");
+                        Log.Information($"Attempting to login into GitHub Docker image registry. Try #{retryCount}");
+                    })
+                .Execute(() => DockerLogin(settings => settings
+                    .SetServer(DockerRegistry)
+                    .SetUsername(GitHubActions.Actor)
+                    .SetPassword(GitHubActions.Token)
+                    .DisableProcessLogOutput()));
+
+
         var DockerFile = SourceDirectory / "SpotSync/Dockerfile";
 
 
@@ -90,13 +119,11 @@ class Build : NukeBuild
             .SetTag($"{DockerImageName}:{DockerImageTag}")
             .DisableProcessLogOutput());
 
-        DockerLogin(x => x
-            .SetServer("ghcr.io")
-            .SetUsername(GitHubActions.Actor)
-            .SetPassword(GitHubActions.Token));
+        var repositoryOwner = Repository.GetGitHubOwner();
+        var repositoryName = Repository.GetGitHubName();
+        var targetImageName = $"{DockerRegistry}/{repositoryOwner.ToLowerInvariant()}/{repositoryName}/{DockerImageName}:{DockerImageTag}";
 
-        DockerPush(x => x
-            .SetName($"ghcr.io/{GitHubActions.Actor}/{DockerImageName}:{DockerImageTag}"));
+        DockerPush(x => x.SetName(targetImageName));
     });
 
 }
