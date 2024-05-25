@@ -8,6 +8,7 @@
 	<Version>1.0.0</Version>
 	<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 	<DockerfileContext>..\..</DockerfileContext>
+	<BaseOutputPath>..\..\bin</BaseOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
