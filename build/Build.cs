@@ -10,6 +10,7 @@ using Nuke.Common.ProjectModel;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.DotNet;
+using Nuke.Common.Tools.Git;
 using Nuke.Common.Tools.GitHub;
 using Nuke.Common.Utilities.Collections;
 using static Nuke.Common.EnvironmentInfo;
@@ -21,8 +22,11 @@ using static Nuke.Common.Tools.DotNet.DotNetTasks;
 [GitHubActions(
     "docker-publish",
     GitHubActionsImage.UbuntuLatest,
-    OnPushBranches = new[] { "main" },
-    InvokedTargets = new[] { nameof(PublishDocker) }
+    OnPushBranches = ["main"],
+    InvokedTargets = [nameof(PublishDocker)],
+    EnableGitHubToken = true,
+    WritePermissions = [GitHubActionsPermissions.Packages,GitHubActionsPermissions.IdToken],
+    ReadPermissions = [GitHubActionsPermissions.Contents]
 )]
 class Build : NukeBuild
 {
@@ -86,9 +90,10 @@ class Build : NukeBuild
             .SetTag($"{DockerImageName}:{DockerImageTag}"));
 
         DockerLogin(x => x
+            .SetServer("ghcr.io")
             .SetUsername(GitHubActions.Actor)
             .SetPassword(GitHubActions.Token)
-            .SetServer("ghcr.io"));
+            .DisableProcessLogOutput());
 
         DockerPush(x => x
             .SetName($"ghcr.io/{DockerImageName}:{DockerImageTag}"));
