@@ -9,10 +9,10 @@ using SpotSync.Components.Account;
 using SpotSync.Data;
 using static SpotifyAPI.Web.Scopes;
 using BytexDigital.Blazor.Components.CookieConsent;
-using SpotSync.Components.Cookie;
 using SpotSync.Services;
 using SpotSync.Interfaces;
 using SpotSync;
+using TablerCookieConsent;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -97,19 +97,9 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
 
 builder.Services.AddCookieConsent(o =>
 {
-    o.Revision = 1;
-    o.PolicyUrl = "/cookie-policy";
-
-    // Call optional
-    o.UseDefaultConsentPrompt(prompt =>
-    {
-        prompt.Position = ConsentModalPosition.BottomRight;
-        prompt.Layout = ConsentModalLayout.Cloud;
-        prompt.SecondaryActionOpensSettings = true;
-        prompt.AcceptAllButtonDisplaysFirst = true;
-    });
-	o.AutomaticallyShow = true;
-	o.ConsentPromptVariant = new CustomSettingsPrompt();
+	o.Revision = 1;
+	o.PolicyUrl = "/cookie-policy";
+	o.ConsentPromptVariant = new TablerCookieConsentPromptVariant();
 });
 
 
