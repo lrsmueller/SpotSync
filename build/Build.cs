@@ -10,6 +10,7 @@ using Nuke.Common.ProjectModel;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.Docker;
 using Nuke.Common.Tools.DotNet;
+using Nuke.Common.Tools.GitHub;
 using Nuke.Common.Utilities.Collections;
 using static Nuke.Common.EnvironmentInfo;
 using static Nuke.Common.IO.FileSystemTasks;
@@ -30,11 +31,13 @@ class Build : NukeBuild
     AbsolutePath SourceDirectory => RootDirectory / "src";
     AbsolutePath OutputDirectory => RootDirectory / "bin";
 
+    [GitRepository] readonly GitRepository Repository;
+
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
-    [Parameter("Docker Image Name")]
-    readonly string DockerImageName = "SpotSync";
+    //[Parameter("Docker Image Name")]
+    string DockerImageName => Repository.GetGitHubName().ToLower();
 
     [Parameter("Docker Image Tag")]
     readonly string DockerImageTag = "latest";
@@ -73,9 +76,13 @@ class Build : NukeBuild
     .DependsOn(Compile)
     .Executes(() =>
     {
+        var DockerFile = SourceDirectory / "SpotSync/Dockerfile";
+
+
+
         DockerBuild(x => x
             .SetPath(".")
-            .SetFile($"{DockerImageName}/Dockerfile")
+            .SetFile(DockerFile)
             .SetTag($"{DockerImageName}:{DockerImageTag}"));
 
         DockerLogin(x => x
