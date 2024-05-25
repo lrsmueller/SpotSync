@@ -119,9 +119,9 @@ class Build : NukeBuild
             .SetTag($"{DockerImageName}:{DockerImageTag}")
             .DisableProcessLogOutput());
 
-        var repositoryOwner = Repository.GetGitHubOwner();
-        var repositoryName = Repository.GetGitHubName();
-        var targetImageName = $"{DockerRegistry}/{repositoryOwner.ToLowerInvariant()}/{repositoryName}/{DockerImageName}:{DockerImageTag}";
+        var repositoryOwner = Repository.GetGitHubOwner().ToLowerInvariant();
+        var repositoryName = Repository.GetGitHubName().ToLowerInvariant();
+        var targetImageName = $"{DockerRegistry}/{repositoryOwner}/{repositoryName}/{DockerImageName}:{DockerImageTag}";
 
         DockerPush(x => x.SetName(targetImageName));
     });
