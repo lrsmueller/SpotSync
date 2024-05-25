@@ -1,10 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-SpotSync-71f64fb3-810b-4424-bf67-4b8c55aa62b7</UserSecretsId>
+	<Version>1.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
