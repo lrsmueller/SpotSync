@@ -87,16 +87,16 @@ class Build : NukeBuild
         DockerBuild(x => x
             .SetPath(".")
             .SetFile(DockerFile)
-            .SetTag($"{DockerImageName}:{DockerImageTag}"));
+            .SetTag($"{DockerImageName}:{DockerImageTag}")
+            .DisableProcessLogOutput());
 
         DockerLogin(x => x
             .SetServer("ghcr.io")
             .SetUsername(GitHubActions.Actor)
-            .SetPassword(GitHubActions.Token)
-            .DisableProcessLogOutput());
+            .SetPassword(GitHubActions.Token));
 
         DockerPush(x => x
-            .SetName($"ghcr.io/{DockerImageName}:{DockerImageTag}"));
+            .SetName($"ghcr.io/{GitHubActions.Actor}/{DockerImageName}:{DockerImageTag}"));
     });
 
 }
