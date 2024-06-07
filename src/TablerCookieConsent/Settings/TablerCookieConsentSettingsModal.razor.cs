@@ -1,58 +1,12 @@
-﻿@namespace TablerCookieConsent
-@using BytexDigital.Blazor.Components.CookieConsent.Dialogs.Settings
-@using BytexDigital.Blazor.Components.CookieConsent.Internal
-@using System.Globalization
-@using Microsoft.Extensions.Options
-@inherits CookieConsentSettingsModalComponentBase
+using BytexDigital.Blazor.Components.CookieConsent;
+using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Options;
+using System.Globalization;
 
-<div class="modal settings-modal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
+namespace TablerCookieConsent.Settings;
 
-            <div class="modal-header">
-                <h1 class="modal-title">
-                    @Localizer.GetLocalization(Options.Value.SettingsTitleText, CultureCode, DefaultCultureCode)
-                </h1>
-
-                <button aria-lable="Close" @onclick="async () => await OnClosePreferences.InvokeAsync(false)" class="btn-close"></button>
-            </div>
-
-            <div class="modal-body">
-                <p class="mb-2">
-                    @Localizer.GetLocalization(Options.Value.SettingsDescriptionText,CultureCode, DefaultCultureCode)
-                </p>
-
-                <div class="mb-3">
-                    <a class="" href="@Options.Value.PolicyUrl" target="_blank">
-                        @Localizer.GetLocalization(Options.Value.ShowPolicyText,CultureCode,DefaultCultureCode)
-                        </a>
-                </div>
-
-                <div class="mb-2 accordion">
-                    @foreach (var category in Options.Value.Categories)
-                    {
-                        <TablerCookieConsentSettingsCategory @key="category.Identifier" Category="category" Selected="AcceptedCategories.Contains(category.Identifier)" SelectedChanged="val => SelectedChanged(category, val)"/>
-                    }
-                </div>
-            </div>
-
-            <div class="modal-footer ">
-                
-                        
-                <button @onclick="AllowSelectedAsync" class="btn btn-primary col-12 col-lg-auto">
-                    @Localizer.GetLocalization(Options.Value.SettingsContinueWithSelectedPreferencesText, CultureCode, DefaultCultureCode)
-                </button>
-                        
-                <button @onclick="AllowAllAsync" class="btn btn-secondary col-12 col-lg-auto">
-                    @Localizer.GetLocalization(Options.Value.ConsentAcceptAllText,CultureCode, DefaultCultureCode)
-                </button>
-                        
-            </div>
-        </div>
-    </div>
-</div>
-
-@code {
+public partial class TablerCookieConsentSettingsModal
+{
     [Inject] protected IOptions<CookieConsentOptions> Options { get; set; }
 
     [Inject] protected CookieConsentService CookieConsentService { get; set; }
@@ -103,13 +57,13 @@
     private async Task AllowSelectedAsync()
     {
         await CookieConsentService.SavePreferencesAsync(new CookiePreferences
-            {
-                AcceptedRevision = Options.Value.Revision,
-                AllowedCategories = AcceptedCategories.ToArray(),
-                AllowedServices = AcceptedServices.ToArray()
-            });
+        {
+            AcceptedRevision = Options.Value.Revision,
+            AllowedCategories = AcceptedCategories.ToArray(),
+            AllowedServices = AcceptedServices.ToArray()
+        });
 
-            
+
         await OnClosePreferences.InvokeAsync(true);
     }
 

@@ -11,10 +11,6 @@
     <None Remove="TablerCookieConsentSettingsModal.razor.css" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="TablerCookieConsentSettingsModal.razor.css" />
-  </ItemGroup>
-
 
   <ItemGroup>
     <SupportedPlatform Include="browser" />

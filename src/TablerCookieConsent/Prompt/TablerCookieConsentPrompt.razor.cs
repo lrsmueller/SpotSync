@@ -5,8 +5,9 @@ using BytexDigital.Blazor.Components.CookieConsent.Dialogs.Prompt.Default;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;
 using System.Globalization;
+using TablerCookieConsent.Prompt;
 
-namespace TablerCookieConsent﻿;
+namespace TablerCookieConsent.Prompt;
 
 public partial class TablerCookieConsentPrompt : CookieConsentPromptComponentBase
 {
