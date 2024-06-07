@@ -73,11 +73,9 @@ builder.Services.AddAuthentication(options =>
 	})
 	.AddIdentityCookies();
 
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<ISpotifyService, SpotifyService>();
+builder.Services.AddMemoryCache();
 
-builder.Services.AddHostedService<RefreshBackgroundService>();
-builder.Services.AddScoped<IMessageService, MessengerService>();
+
 
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
 	{
@@ -89,6 +87,12 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
 	.AddEntityFrameworkStores<ApplicationDbContext>()
 	.AddSignInManager()
 	.AddDefaultTokenProviders();
+
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ISpotifyService, SpotifyService>();
+
+builder.Services.AddHostedService<RefreshBackgroundService>();
+builder.Services.AddScoped<IMessageService, MessengerService>();
 
 builder.Services.AddCookieConsent(o =>
 {

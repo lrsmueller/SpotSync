@@ -66,7 +66,8 @@ public class RefreshBackgroundService : BackgroundService
         {
             cancellationToken.ThrowIfCancellationRequested();
             var _ = new SpotifyClient(config.Config);
-            await SpotifyService.RefreshSelectedPlaylistAsync(_, config.User.SelectedPlaylist, cancellationToken);
+            var tracks = await SpotifyService.GetLast100LikedSongsAsync(_, cancellationToken);
+            await SpotifyService.RefreshSelectedPlaylistAsync(_, config.User.SelectedPlaylist, tracks,cancellationToken);
 
         }
 

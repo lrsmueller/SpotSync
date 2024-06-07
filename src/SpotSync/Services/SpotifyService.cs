@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using SpotifyAPI.Web;
 using SpotifyAPI.Web.Http;
@@ -15,6 +16,8 @@ namespace SpotSync.Services
 
         private readonly IUserService _userService;
         private readonly IOptions<SpotifyOptions> _spotifySettings;
+        private readonly ILogger<SpotifyService> _logger;
+        private readonly IMemoryCache _memoryCache;
 
         private SpotifyClient SpotifyClient;
 
@@ -26,13 +29,15 @@ namespace SpotSync.Services
                     Scopes.PlaylistModifyPublic,
                     Scopes.UserLibraryRead];
 
-        public SpotifyService(IUserService userService, IOptions<SpotifyOptions> options)
-        {
-            _userService = userService;
-            _spotifySettings = options;
-        }
+		public SpotifyService(IUserService userService, IOptions<SpotifyOptions> spotifySettings, ILogger<SpotifyService> logger, IMemoryCache memoryCache)
+		{
+			_userService = userService;
+			_spotifySettings = spotifySettings;
+			_logger = logger;
+			_memoryCache = memoryCache;
+		}
 
-        public async Task<SpotifyClient> BuildClientAsync(CancellationToken cancellationToken = default)
+		public async Task<SpotifyClient> BuildClientAsync(CancellationToken cancellationToken = default)
         {
             if (SpotifyClient != null) { return SpotifyClient; }
 
@@ -57,19 +62,26 @@ namespace SpotSync.Services
 
             }
             var user = await _userService.GetUserAsync(cancellationToken);
-            //var tracks = await GetLast100LikedSongsAsync(cancellationToken);
-            //var request = new PlaylistReplaceItemsRequest(tracks
-            //    .Select(e => e.Track.Uri)
-            //    .ToList());
-
-            //await SpotifyClient.Playlists.ReplaceItems(user.SelectedPlaylist, request, cancellationToken);
-
-            await RefreshSelectedPlaylistAsync(SpotifyClient,user.SelectedPlaylist, cancellationToken);
+            var tracks = await GetLast100LikedSongsAsync(cancellationToken);
+            await RefreshSelectedPlaylistAsync(SpotifyClient,user.SelectedPlaylist, tracks, cancellationToken);
         }
 
         public async Task<List<SavedTrack>> GetLast100LikedSongsAsync(CancellationToken cancellationToken = default)
         {
-            return await GetLast100LikedSongsAsync(SpotifyClient, cancellationToken);
+            var user = await _userService.GetUserAsync(cancellationToken);
+            var key = $"{user.Id}-tracks";
+
+
+			var tracks = await _memoryCache.GetOrCreateAsync(key ,async (entry) => {
+
+                
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60*5);
+
+                return await GetLast100LikedSongsAsync(SpotifyClient, cancellationToken);
+                
+            });
+
+            return tracks;
         }
 
         public async Task<Paging<FullPlaylist>> GetPlaylistsAsync(CancellationToken cancellationToken = default)
@@ -86,13 +98,15 @@ namespace SpotSync.Services
         {
             return await GetProfileAsync(SpotifyClient, cancellationToken);
         }
+		
+        
+        #region Static
 
-
-        public static async Task RefreshSelectedPlaylistAsync(SpotifyClient client, string playlist, CancellationToken cancellationToken = default)
+		public static async Task RefreshSelectedPlaylistAsync(SpotifyClient client, string playlist,List<SavedTrack> savedTracks, CancellationToken cancellationToken = default)
         {
             
-            var tracks = await GetLast100LikedSongsAsync(client,cancellationToken);
-            var request = new PlaylistReplaceItemsRequest(tracks
+            //var tracks = await GetLast100LikedSongsAsync(client,cancellationToken);
+            var request = new PlaylistReplaceItemsRequest(savedTracks
                 .Select(e => e.Track.Uri)
                 .ToList());
 
@@ -130,6 +144,6 @@ namespace SpotSync.Services
         {
             return await client.UserProfile.Current(cancellationToken);
         }
-
-    }
+		#endregion Static
+	}
 }
