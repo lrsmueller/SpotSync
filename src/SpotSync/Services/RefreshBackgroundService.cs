@@ -26,8 +26,8 @@ public class RefreshBackgroundService : BackgroundService
         _spotifySettings = spotifySettings;
 
 		var now = DateTime.Now;
-		var hour = now.Hour >= 23 ? 0 : now.Hour + 1;
-		_nextRun = new(now.Year, now.Month, now.Day, hour, 0, 0);
+        now = now.AddHours(1);
+		_nextRun = new(now.Year, now.Month, now.Day, now.Hour, 0, 0);
 
 
 		_logger.LogInformation($"{nameof(RefreshBackgroundService)} initalized; First Run is at {_nextRun}");
