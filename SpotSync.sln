@@ -14,7 +14,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpotSync", "src\SpotSync\Sp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpotSync.Test", "src\SpotSync.Test\SpotSync.Test.csproj", "{E79D3CA7-2190-4E6B-A848-81D3AE750810}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TablerCookieConsent", "src\TablerCookieConsent\TablerCookieConsent.csproj", "{062DA2CE-4933-41D7-9A3B-9ED2D6D3AE6E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TablerCookieConsent", "src\TablerCookieConsent\TablerCookieConsent.csproj", "{062DA2CE-4933-41D7-9A3B-9ED2D6D3AE6E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

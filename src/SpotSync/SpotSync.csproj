@@ -13,11 +13,13 @@
 
   <ItemGroup>
     <Content Remove="D:\Nuget\Packages\bytexdigital.blazor.components.cookieconsent\1.0.18\contentFiles\any\net5.0\README.md" />
+    <Content Remove="D:\Nuget\Packages\bytexdigital.blazor.components.cookieconsent\1.2.0-preview.1698872627\contentFiles\any\net5.0\package-lock.json" />
+    <Content Remove="D:\Nuget\Packages\bytexdigital.blazor.components.cookieconsent\1.2.0-preview.1698872627\contentFiles\any\net5.0\package.json" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AspNet.Security.OAuth.Spotify" Version="8.0.0" />
-    <PackageReference Include="BytexDigital.Blazor.Components.CookieConsent" Version="*" />
+    <PackageReference Include="BytexDigital.Blazor.Components.CookieConsent" Version="1.2.0-preview.1698872627" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />

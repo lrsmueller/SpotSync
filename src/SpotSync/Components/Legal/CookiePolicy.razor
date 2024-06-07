@@ -1,9 +1,12 @@
 ﻿@page "/cookie-policy"
 @page "/cookie"
+@using BytexDigital.Blazor.Components.CookieConsent
+@inject CookieConsentService CookieConsentService
 @attribute [AllowAnonymous]
 
 
-<h1>Cookie Policy for spotsync</h1>
+<button class="float-end btn btn-secondary" @onclick=CookieConsentService.ShowPreferencesModalAsync>Edit Preferences</button>
+<h1>Cookie Policy for spotsync</h1> 
 
 <p>This is the Cookie Policy for spotsync, accessible from spotsync.larsmueller.me</p>
 

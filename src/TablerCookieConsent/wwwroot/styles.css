@@ -1,0 +1,8 @@
+﻿.settings-modal {
+	display: block;
+}
+
+.accordion-button::after {
+	position: absolute;
+	left: 0;
+}

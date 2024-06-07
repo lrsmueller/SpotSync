@@ -1,0 +1,88 @@
+﻿﻿@using Microsoft.Extensions.Options
+@namespace TablerCookieConsent
+
+<div class="accordion-item" @key="@($"category_{Category.Identifier}")">
+    <div class="accordion-header row">
+        
+        <h2 class="col m-0">
+            <button class="ms-3 accordion-button @(Collapsed ? "collapsed" : "")" @onclick="() => Collapsed = !Collapsed">
+                    @Localizer.GetLocalization(Category.TitleText)
+            </button>
+
+            
+           
+
+        </h2>
+        @if (!Category.IsRequired)
+        {
+            <label class="ps-0 pe-4 my-auto col-auto form-check form-switch form-check-single ">
+                <input type="checkbox" class="form-check-input" checked="@(Selected ? "checked" : null)" disabled="@(Category.IsRequired ? "disabled" : null)" @onchange="OnChangedAsync">
+            </label>
+        }
+
+    </div>
+
+    <div class="accordion-collapse collapse @(Collapsed ? "" : "show")" @key="@($"category_collapsible_{Category.Identifier}")">
+        <div class="p-2 px-4">
+            <p class="m-0">
+                @Localizer.GetLocalization(Category.DescriptionText)
+            </p>
+
+            @if (Category.Services != null && Category.Services.Count > 0)
+            {
+                <h5 class="mt-3 mb-1 fw-bold">@Localizer.GetLocalization(Options.Value.SettingsUsedServicesText)</h5>
+
+                <div class="mt-1 row row-cols-1 g-2">
+                    @foreach (var service in Category.Services)
+                    {
+                        @*cc-flex-col md:cc-flex-row cc-justify-between cc-gap-1*@
+                        <div class="d-flex flex-column flex-md-row justify-content-between gap-1 ">
+                            <div>@Localizer.GetLocalization(service.TitleText)</div>
+                            <div>
+                                @if (!string.IsNullOrEmpty(service.PolicyUrl))
+                                {
+                                    <a class="" href="@service.PolicyUrl" target="_blank">
+                                        <span>
+                                            @Localizer.GetLocalization(service.ShowPolicyText)
+                                        </span>
+
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-external-link"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6" /><path d="M11 13l9 -9" /><path d="M15 4h5v5" /></svg>
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Inject]
+    protected IOptions<CookieConsentOptions> Options { get; set; }
+
+    [Inject]
+    public CookieConsentLocalizer Localizer { get; set; }
+
+    [Parameter]
+    public CookieCategory Category { get; set; }
+
+    [Parameter]
+    public bool Selected { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> SelectedChanged { get; set; }
+
+    private string MainKey => $"{Category.Identifier}-svg-container";
+
+    private bool Collapsed { get; set; } = true;
+
+    private async Task OnChangedAsync(ChangeEventArgs args)
+    {
+        Selected = (bool)args.Value;
+        await SelectedChanged.InvokeAsync(Selected);
+    }
+
+}

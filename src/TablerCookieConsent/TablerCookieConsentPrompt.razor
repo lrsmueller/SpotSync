@@ -1,52 +1,70 @@
 ﻿@namespace TablerCookieConsent﻿
 @using System.Globalization
+@using BytexDigital.Blazor.Components.CookieConsent.Dialogs.Prompt
 @using BytexDigital.Blazor.Components.CookieConsent.Internal
 @using BytexDigital.Blazor.Components.CookieConsent
-@using BytexDigital.Blazor.Components.CookieConsent.Dialogs.Prompts
 @using Microsoft.Extensions.Options
 @inherits CookieConsentPromptComponentBase
 
 <div class="offcanvas offcanvas-bottom h-auto show" tabindex="-1" id="offcanvasBottom" aria-modal="true" role="dialog">
     <div class="offcanvas-body">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col">
-                    <strong>
-                        @Options.Value.ConsentTitleText.GetLocalization(CultureCode, DefaultCultureCode)
-                    </strong>
-                    @Options.Value.ConsentDescriptionText.GetLocalization(CultureCode, CultureCode)
-                    <a class="ms-1" href="@Options.Value.PolicyUrl" target="_blank">@Options.Value.ShowPolicyText.GetLocalization(CultureCode, DefaultCultureCode)</a>
+            <div class="row algin-items-center gy-3">
+                <div class="col-md d-flex">
+                    <div class="my-auto">
+                        <strong>
+                            @Localizer.GetLocalization(Options.Value.ConsentTitleText,CultureCode, DefaultCultureCode)
+                        </strong>
+                        @Localizer.GetLocalization(Options.Value.ConsentDescriptionText, CultureCode, CultureCode)
+                        <a href="@Options.Value.PolicyUrl" target="_blank">@Localizer.GetLocalization(Options.Value.ShowPolicyText, CultureCode, DefaultCultureCode)</a>
+                    </div>
+                    
                 </div>
-                <div class="col-auto">
+
+                <div class="col-auto btn-list">
+                    @if (!VariantOptions.SecondaryActionOpensSettings && !OnlyRequiredCategoriesExist)
+                    {
+                    
+                        <button @onclick=OpenSettingsAsync class="btn btn-link">
+                            @Localizer.GetLocalization(Options.Value.OpenPreferencesText)
+                        </button>
+                    
+                    }
                     @if (!OnlyRequiredCategoriesExist)
                     {
+                        
                         @if (VariantOptions.SecondaryActionOpensSettings)
                         {
-                            <button @onclick=OpenSettingsAsync class="btn btn-primary">
-                                @Options.Value.OpenPreferencesText.GetLocalization(CultureCode, DefaultCultureCode)
-                            </button>
+                                <button @onclick=OpenSettingsAsync class="btn btn-primary">
+                                    @Localizer.GetLocalization(Options.Value.OpenPreferencesText, CultureCode, DefaultCultureCode)
+                                </button>
                         }
                         else
                         {
-                            <button @onclick="async () => await AcceptAsync(false)" class="btn btn-primary" data-bs-dismiss="offcanvas">
-                                @Options.Value.ConsentNecessaryOnlyText.GetLocalization(CultureCode, DefaultCultureCode)
-                            </button>
+                            
+                                <button @onclick="async () => await AcceptAsync(false)" class="btn btn-primary" data-bs-dismiss="offcanvas">
+                                    @Localizer.GetLocalization(Options.Value.ConsentNecessaryOnlyText, CultureCode, DefaultCultureCode)
+                                </button>
+                            
                         }
+                        
                     }
 
                     
-                </div>
-                <div class="col-auto">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="offcanvas" @onclick="async () => await AcceptAsync(true)">
-                        @if (!OnlyRequiredCategoriesExist)
-                        {
-                            @Options.Value.ConsentAcceptAllText.GetLocalization(CultureCode, DefaultCultureCode)
-                        }
-                        else
-                        {
-                            @Options.Value.ConsentAcknowledgeText.GetLocalization(CultureCode, DefaultCultureCode)
-                        }
-                    </button>
+                
+                
+                    
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="offcanvas" @onclick="async () => await AcceptAsync(true)">
+                            @if (!OnlyRequiredCategoriesExist)
+                            {
+                            @Localizer.GetLocalization(Options.Value.ConsentAcceptAllText, CultureCode, DefaultCultureCode)
+                            }
+                            else
+                            {
+                            @Localizer.GetLocalization(Options.Value.ConsentAcknowledgeText, CultureCode, DefaultCultureCode)
+                            }
+                        </button>
+                    
                 </div>
             </div>
         </div>

@@ -61,18 +61,13 @@ builder.Services.AddAuthentication(options =>
 		  };
 		options.Scope.Add(string.Join(",", scopes));
 
-		//options.ClaimActions.MapAll();
-
 		options.ClaimActions.MapJsonKey(SpotifyClaimTypes.Product, "product", "string");
-		//options.ClaimActions.MapJsonKey("urn:spotify:product", "product", "string");
 		options.ClaimActions.MapJsonSubKey(SpotifyClaimTypes.ProfilePicture, "images", "url", "string");
 
 		options.Events.OnCreatingTicket = ctx =>
 		{
 			var tokens = ctx.Properties.GetTokens();
 			ctx.Properties.StoreTokens(tokens);
-
-			//TODO add save tokens to DB
 			return Task.CompletedTask;
 		};
 	})
@@ -100,6 +95,7 @@ builder.Services.AddCookieConsent(o =>
 	o.Revision = 1;
 	o.PolicyUrl = "/cookie-policy";
 	o.ConsentPromptVariant = new TablerCookieConsentPromptVariant();
+	o.SettingsModalVariant = new TablerCookieConsentSettingsModelVariant();
 });
 
 
