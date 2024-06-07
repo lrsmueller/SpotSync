@@ -18,7 +18,7 @@
 			<div class="card-header">
 				<span class="card-title">All Playlists</span>
 				<div class="card-actions">
-					<button class="btn btn-primary btn-icon" data-bs-toggle="modal" data-bs-target="#addPlaylistModal">
+					<button class="btn btn-spotify btn-icon" data-bs-toggle="modal" data-bs-target="#addPlaylistModal">
 						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-plus">
 							<path stroke="none" d="M0 0h24v24H0z" fill="none" />
 							<path d="M12 5l0 14" />
@@ -37,7 +37,7 @@
 							<span class="">
 								@playlist.Name
 							</span>
-							<button class="ms-auto btn btn-success btn-sm" disabled="@(playlist.Id == User.SelectedPlaylist)" @onclick="() =>PlaylistSelected(playlist.Id)">
+							<button class="ms-auto btn btn-spotify btn-sm" disabled="@(playlist.Id == User.SelectedPlaylist)" @onclick="() =>PlaylistSelected(playlist.Id)">
 								Choose Playlist
 							</button>
 						</li>	
@@ -55,8 +55,15 @@
 				@*TODO Pagination*@
 				@foreach(var track in SavedTracks.Take(20))
 				{
-					<li class="d-flex">
-						@track.Track.Name on @track.Track.Album.Name by @track.Track.Artists.First().Name
+					<li class="d-flex mb-1">
+						<span>
+							@track.Track.Name on @track.Track.Album.Name by @track.Track.Artists.First().Name
+						</span>
+						<div class="ms-auto my-auto ">
+						<a class="btn btn-icon btn-sm" target="_blank" rel="noreferrer" href="@track.Track.ExternalUrls["spotify"]">
+							<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-player-play"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 4v16l13 -8z" /></svg>
+						</a>
+						</div>
 					</li>
 				}
 			</div>
@@ -167,13 +174,22 @@
 
 	protected AddPlaylistModel addPlaylistModel = new();
 
-	protected override async Task OnParametersSetAsync()
+	protected bool _IsSpotifyLoaded = false;
+
+	protected override async Task OnInitializedAsync()
 	{
-		User = await userSerivce.GetUserAsync();
-		var _ = await SpotifyService.BuildClientAsync();
-		SavedTracks = await SpotifyService.GetLast100LikedSongsAsync();
-		Me = await SpotifyService.GetProfileAsync();
-		Playlists = await SpotifyService.GetPlaylistsAsync();
+		if (!_IsSpotifyLoaded && SpotifyService != null)
+		{	
+			User = await userSerivce.GetUserAsync();
+			var _ = await SpotifyService.BuildClientAsync();
+			SavedTracks = await SpotifyService.GetLast100LikedSongsAsync();
+			Me = await SpotifyService.GetProfileAsync();
+			Playlists = await SpotifyService.GetPlaylistsAsync();
+
+			_IsSpotifyLoaded = true;
+		}
+
+		
 	}
 
 	private async Task AddPlaylistSubmit()

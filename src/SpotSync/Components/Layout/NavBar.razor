@@ -5,7 +5,7 @@
 @using SpotSync.Data
 @using SpotSync.Interfaces
 @inject AuthenticationStateProvider AuthenticationStateProvider
-<header class="navbar navbar-expand-md navbar-transparent d-print-none">
+<header class="navbar navbar-expand-sm navbar-transparent d-print-none">
     <div class="container-xl">
         @*Toggle on Collapsed Menu*@
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
@@ -13,7 +13,7 @@
         </button>
 
         @*Logo*@
-        <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
+        <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-sm-3">
             <a href="/">
                 <img src="/img/HorizontalLogo.svg" width="110" height="32" alt="SpotSync" class="navbar-brand-image">
             </a>
@@ -72,8 +72,13 @@
                             </span>
                         </button>
                     </li>
-
+                    <li class="nav-item">
+                        <a href="https://spotify.com" class="btn" target="_blank" rel="noreferrer">
+                            <img src="/img/Spotify_Logo_RGB_Black.png" height="24" />
+                        </a>
+                    </li>
                 </ul>
+               
             </div>
         </div>
     </div>
